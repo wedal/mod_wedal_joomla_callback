@@ -23,9 +23,9 @@
 	<config>
 	<fields name="params">
 		<fieldset name="basic">
-		
-			<field name="buttontext" type="text" default="" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
-		
+
+			<field name="buttontext" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
+
 			<field
 				name="email"
 				type="email"
@@ -35,61 +35,61 @@
 				class="inputbox"
 				validate="email"
 			/>
-			
+
 			<field type="spacer" name="spacer0" hr="true" />
-			
+
 			<field type="radio" name="showname" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME" default="1" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
-			
+
 			<field type="radio" name="shownamereq" showon="showname:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAMEREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAMEREQ" default="1" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
 
-			<field type="spacer" name="spacer1" hr="true" />			
-			
+			<field type="spacer" name="spacer1" hr="true" />
+
 			<field type="radio" name="showemail" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAIL_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAIL" default="0" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
-			
+
 			<field type="radio" name="showemailreq" showon="showemail:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ" default="0" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
 
-			<field type="spacer" name="spacer2" hr="true" />			
-			
+			<field type="spacer" name="spacer2" hr="true" />
+
 			<field type="radio" name="showphone" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONE_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONE" default="1" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
-			
+
 			<field type="radio" name="showphonereq" showon="showphone:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEREQ" default="1" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
-			</field>	
+			</field>
 
-			<field type="spacer" name="spacer3" hr="true" />			
-			
+			<field type="spacer" name="spacer3" hr="true" />
+
 			<field type="radio" name="showtextarea" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA" default="1" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
-			
+
 			<field type="radio" name="showtextareareq" showon="showtextarea:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREAREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREAREQ" default="0" class="btn-group btn-group-yesno">
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
-			
+
 			<field type="spacer" name="spacer4" hr="true" />
-			
+
 			<field name="thankyoutext" type="textarea" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT" label="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU" description="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU_DESC" rows="10" cols="5" />
-			
+
 			<field type="spacer" name="spacer5" hr="true" />
-			
+
 		</fieldset>
 
 		<fieldset name="advanced">
