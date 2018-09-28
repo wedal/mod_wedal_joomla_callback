@@ -33,7 +33,7 @@
                     </div>
 
         			<div class="inputcont">
-        				<input type="text" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_antispam" name="WJCForm<?php echo $moduleId ?>_antispam" />
+        				<input type="hidden" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_antispam" name="WJCForm<?php echo $moduleId ?>_antispam" />
         			</div>
 
         		</div>
