@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.1" client="site" method="upgrade">
+	<name>Wedal Joomla Callback</name>
+	<author>Wedal</author>
+	<creationDate>2018</creationDate>
+	<copyright>Copyright (C) 2018 Wedal.ru. All rights reserved.</copyright>
+	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
+	<authorEmail>wedal@wedal.ru</authorEmail>
+	<authorUrl>wedal.ru</authorUrl>
+	<version>1.0</version>
+	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
+	<files>
+		<filename module="mod_wedal_joomla_callback">mod_wedal_joomla_callback.php</filename>
+		<filename>helper.php</filename>
+		<folder>tmpl</folder>
+		<folder>assets</folder>
+	</files>
+	<languages folder="language">
+		<language tag="ru-RU">ru-RU/ru-RU.mod_wedal_joomla_callback.ini</language>
+		<language tag="ru-RU">ru-RU/ru-RU.mod_wedal_joomla_callback.sys.ini</language>
+	</languages>
+
+	<config>
+	<fields name="params">
+		<fieldset name="basic">
+		
+			<field name="buttontext" type="text" default="" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
+		
+			<field
+				name="email"
+				type="email"
+				label="MOD_WEDAL_JOOMLA_CALLBACK_RECIPIENT"
+				description="MOD_WEDAL_JOOMLA_CALLBACK_RECIPIENT_DESC"
+				size="30"
+				class="inputbox"
+				validate="email"
+			/>
+			
+			<field type="spacer" name="spacer0" hr="true" />
+			
+			<field type="radio" name="showname" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			
+			<field type="radio" name="shownamereq" showon="showname:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAMEREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAMEREQ" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field type="spacer" name="spacer1" hr="true" />			
+			
+			<field type="radio" name="showemail" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAIL_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAIL" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			
+			<field type="radio" name="showemailreq" showon="showemail:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field type="spacer" name="spacer2" hr="true" />			
+			
+			<field type="radio" name="showphone" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONE_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONE" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			
+			<field type="radio" name="showphonereq" showon="showphone:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEREQ" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>	
+
+			<field type="spacer" name="spacer3" hr="true" />			
+			
+			<field type="radio" name="showtextarea" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			
+			<field type="radio" name="showtextareareq" showon="showtextarea:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREAREQ_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREAREQ" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			
+			<field type="spacer" name="spacer4" hr="true" />
+			
+			<field name="thankyoutext" type="textarea" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT" label="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU" description="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU_DESC" rows="10" cols="5" />
+			
+			<field type="spacer" name="spacer5" hr="true" />
+			
+		</fieldset>
+
+		<fieldset name="advanced">
+			<field
+				name="layout"
+				type="modulelayout"
+				label="JFIELD_ALT_LAYOUT_LABEL"
+				description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+			/>
+
+			<field
+				name="moduleclass_sfx"
+				type="textarea"
+				label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+				description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
+				rows="3"
+			/>
+
+			<field
+				name="cache"
+				type="list"
+				label="COM_MODULES_FIELD_CACHING_LABEL"
+				description="COM_MODULES_FIELD_CACHING_DESC"
+				default="1"
+				>
+				<option value="1">JGLOBAL_USE_GLOBAL</option>
+				<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+			</field>
+
+			<field
+				name="cache_time"
+				type="text"
+				label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+				description="COM_MODULES_FIELD_CACHE_TIME_DESC"
+				default="900"
+			/>
+
+			<field
+				name="cachemode"
+				type="hidden"
+				default="static"
+				>
+				<option value="static"></option>
+			</field>
+		</fieldset>
+
+	</fields>
+</config>
+
+</extension>
