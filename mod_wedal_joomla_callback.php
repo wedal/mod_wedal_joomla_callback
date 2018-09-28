@@ -11,15 +11,30 @@ $doc->addStyleSheet('/modules/'.$module->module.'/assets/css/wjcallback.css');
 
 JLoader::register('ModWedalJoomlaCallbackHelper', __DIR__ . '/helper.php');
 
+// Get params
 $moduleId = $module->id;
-//$moduleWidth = $params->get('width', '');
 
-//for ($i = 1; $i < 10; $i++) {
-//    $num_array[$i] = $params->get('article_id_'.$i);
-//}
+$buttontext = $params->get('buttontext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFALT'));
 
-//
-//$images = ModWedalJoomlaCallbackHelper::getImages($params);
+$showname = $params->get('showname', '');
+$shownamereq = $params->get('shownamereq', '');
+
+$showemail = $params->get('showemail', '');
+$showemailreq = $params->get('showemailreq', '');
+
+$showphone = $params->get('showphone', '');
+$showphonereq = $params->get('showphonereq', '');
+
+$showtextarea = $params->get('showtextarea', '');
+$showtextareareq = $params->get('showtextareareq', '');
+
+$thankyoutext = $params->get('thankyoutext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
+
+$showtextarea = $params->get('showtextarea', '');
 
 $moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+
+//$images = ModWedalJoomlaCallbackHelper::getImages($params);
+
+
 require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default'));
