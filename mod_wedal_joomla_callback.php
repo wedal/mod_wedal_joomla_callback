@@ -38,3 +38,4 @@ $moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT,
 
 
 require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default'));
+require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_form');
