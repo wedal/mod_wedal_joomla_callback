@@ -1,11 +1,8 @@
 <?php defined('_JEXEC') or die('Restricted access'); ?>
 
 <div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform modal fade <?php echo $moduleclass_sfx ?>" role="dialog">
-
     <div class="modal-dialog" role="document">
-
         <div class="modal-content">
-
         	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 
         		<div class="modal-header">
@@ -46,9 +43,6 @@
         		</div>
 
         	</form>
-
         </div>
-
     </div>
-
 </div>
