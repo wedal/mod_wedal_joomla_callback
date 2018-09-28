@@ -18,7 +18,7 @@ $moduleId = $module->id;
 //    $num_array[$i] = $params->get('article_id_'.$i);
 //}
 
-
+//
 //$images = ModWedalJoomlaCallbackHelper::getImages($params);
 
 $moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
