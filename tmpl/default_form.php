@@ -7,7 +7,7 @@
 
         		<div class="modal-header">
         			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        			<h2 class="modal-title" id="myModalLabel"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'); ?></h2>
+        			<h2 class="modal-title"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'); ?></h2>
         		</div>
 
         		<div class="modal-body">
