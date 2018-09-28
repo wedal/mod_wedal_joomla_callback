@@ -28,11 +28,15 @@
         			</div>
 
                     <div class="inputcont">
-                        <input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL'); ?>" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_email" name="WJCForm<?php echo $moduleId ?>_email" />
+                        <input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL'); ?>" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_email" name="WJCForm<?php echo $moduleId ?>_email" />
+                    </div>
+
+                    <div class="inputcont">
+                        <textarea rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment"></textarea>
                     </div>
 
         			<div class="inputcont">
-        				<input type="text"  value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_antispam" name="WJCForm<?php echo $moduleId ?>_antispam" />
+        				<input type="text" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_antispam" name="WJCForm<?php echo $moduleId ?>_antispam" />
         			</div>
 
         		</div>
