@@ -1,0 +1,41 @@
+#wjcallback-modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    display: block;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color:rgba(0, 0, 0, 0);
+    -webkit-transition: background .5s ease-out;
+    -moz-transition: background .5s ease-out;
+    -o-transition: background .5s ease-out;
+    transition: background .5s ease-out;
+}
+
+#wjcallback-modal.show {
+    display: block;
+    background-color:rgba(0, 0, 0, 0.5);
+}
+
+#wjcallback-modal .wjcallbackform {
+    width: 600px;
+    margin: 30px auto;
+    box-sizing: border-box;
+    background: #FFF;
+    opacity: 0;
+    -webkit-transition: opacity .5s ease-out;
+    -moz-transition: opacity .5s ease-out;
+    -o-transition: opacity .5s ease-out;
+    transition: opacity .5s ease-out;
+}
+
+#wjcallback-modal.show .wjcallbackform {
+    margin-top: 30px;
+    opacity: 1;
+}
