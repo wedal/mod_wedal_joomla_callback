@@ -18,7 +18,7 @@
 
                     <?php if ($showname) { ?>
             			<div class="inputcont">
-            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME'); ?> <?php echo $shownamereq[0] ?>" value="" class="inputbox <?php echo $shownamereq[0] ?> form-control" id="WJCForm<?php echo $moduleId ?>_name" name="WJCForm<?php echo $moduleId ?>_name" />
+            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME'); ?> <?php echo $shownamereq[0] ?>" value="" class="inputbox <?php echo $shownamereq[1] ?> form-control" id="WJCForm<?php echo $moduleId ?>_name" name="WJCForm<?php echo $moduleId ?>_name" />
             			</div>
                     <?php } ?>
 
@@ -36,7 +36,7 @@
 
                     <?php if ($showtextarea) { ?>
                         <div class="inputcont">
-                            <textarea rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?> <?php echo $showtextareareq[0] ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment <?php echo $showtextareareq[1] ?>"></textarea>
+                            <textarea id="WJCForm<?php echo $moduleId ?>_comment"  rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?> <?php echo $showtextareareq[0] ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment <?php echo $showtextareareq[1] ?>"></textarea>
                         </div>
                     <?php } ?>
 
