@@ -16,25 +16,29 @@
         				<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_DESC'); ?>
         			</div>
 
-        			<div class="inputcont">
-        				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME'); ?>" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_name" name="WJCForm<?php echo $moduleId ?>_name" />
-        			</div>
+                    <?php if ($showname) { ?>
+            			<div class="inputcont">
+            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME'); ?> <?php echo $shownamereq[0] ?>" value="" class="inputbox <?php echo $shownamereq[0] ?> form-control" id="WJCForm<?php echo $moduleId ?>_name" name="WJCForm<?php echo $moduleId ?>_name" />
+            			</div>
+                    <?php } ?>
 
-        			<div class="inputcont">
-        				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE'); ?>" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_phone" name="WJCForm<?php echo $moduleId ?>_phone" />
-        			</div>
+                    <?php if ($showphone) { ?>
+            			<div class="inputcont">
+            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE'); ?> <?php echo $showphonereq[0] ?>" value="" class="inputbox <?php echo $showphonereq[1] ?> form-control" id="WJCForm<?php echo $moduleId ?>_phone" name="WJCForm<?php echo $moduleId ?>_phone" />
+            			</div>
+                    <?php } ?>
 
-                    <div class="inputcont">
-                        <input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL'); ?>" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_email" name="WJCForm<?php echo $moduleId ?>_email" />
-                    </div>
+                    <?php if ($showemail) { ?>
+                        <div class="inputcont">
+                            <input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL'); ?> <?php echo $showemailreq[0] ?>" value="" class="inputbox <?php echo $showemailreq[1] ?> form-control" id="WJCForm<?php echo $moduleId ?>_email" name="WJCForm<?php echo $moduleId ?>_email" />
+                        </div>
+                    <?php } ?>
 
-                    <div class="inputcont">
-                        <textarea rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment"></textarea>
-                    </div>
-
-        			<div class="inputcont">
-        				<input type="hidden" value="" class="inputbox required form-control" id="WJCForm<?php echo $moduleId ?>_antispam" name="WJCForm<?php echo $moduleId ?>_antispam" />
-        			</div>
+                    <?php if ($showtextarea) { ?>
+                        <div class="inputcont">
+                            <textarea rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?> <?php echo $showtextareareq[0] ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment <?php echo $showtextareareq[1] ?>"></textarea>
+                        </div>
+                    <?php } ?>
 
         		</div>
 
