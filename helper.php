@@ -78,14 +78,14 @@ class ModWedalJoomlaCallbackHelper
 
 		$config = & JFactory::getConfig();
 
-		if(isset($input_name)){
+	//	if(isset($input_name)){
 
-			$body = "
-			От имени:  ".$input_name."<br />
-			Данные для связи:<br />Тел.: ".$input_phone."<br />
-			".$call_time."
-			Комментарий: ".$input_comment;
+			ob_start();
+			htmlspecialchars(require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_message'), ENT_QUOTES);
+			$body = ob_get_contents();
+			ob_end_clean();
 
+/*
 			$to = $config->get('mailfrom');
 			$from = array($config->get('mailfrom') , $config->get('fromname') );
 			$subject = "Поступил запрос обратного звонка!";
@@ -97,8 +97,8 @@ class ModWedalJoomlaCallbackHelper
 			$mailer->setBody($body);
 			$mailer->isHTML();
 			$mailer->send();
-
-		}
+*/
+	//	}
 
 	    return;
 	}
