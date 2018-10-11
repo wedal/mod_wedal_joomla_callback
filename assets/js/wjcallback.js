@@ -50,20 +50,18 @@
 
                     } else {
 
-                        /*
-
                         $.ajax({
                            type: 'POST',
-                           url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm',
+                           url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm',
                            data: $(this).serialize(),
                            success: function(data)
                            {
-                              // alert(data);
+                             console.log(data);
                            }
                          });
-                        */
 
                         alert('Спасибо за запрос. В ближайшее время мы с вами свяжемся.');
+						wjcmodal_remove(wjcmodal);
                     }
                  });
 
