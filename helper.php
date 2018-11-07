@@ -78,6 +78,24 @@ class ModWedalJoomlaCallbackHelper
 
 		$config = & JFactory::getConfig();
 
+		$mailtitle = $params->get('mailtitle', '');
+		if (!$mailtitle) {
+			$mailtitle = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT');
+		}
+
+		$email =  $params->get('email', '');
+		if (!$email) {
+			$email = $config->get('mailfrom');
+		}
+
+echo '<pre>';
+    print_r($mailtitle);
+echo '</pre>';
+echo '<pre>';
+    print_r($email);
+echo '</pre>';
+
+
 	//	if(isset($input_name)){
 
 			ob_start();
@@ -85,10 +103,9 @@ class ModWedalJoomlaCallbackHelper
 			$body = ob_get_contents();
 			ob_end_clean();
 
-/*
-			$to = $config->get('mailfrom');
+			$to = $email;
 			$from = array($config->get('mailfrom') , $config->get('fromname') );
-			$subject = "Поступил запрос обратного звонка!";
+			$subject = $mailtitle;
 
 			$mailer = JFactory::getMailer();
 			$mailer->setSender($from);
@@ -97,7 +114,7 @@ class ModWedalJoomlaCallbackHelper
 			$mailer->setBody($body);
 			$mailer->isHTML();
 			$mailer->send();
-*/
+
 	//	}
 
 	    return;

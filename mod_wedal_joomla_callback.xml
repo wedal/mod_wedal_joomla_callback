@@ -36,6 +36,8 @@
 				validate="email"
 			/>
 
+			<field name="mailtitle" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE" description="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DESC"  />
+
 			<field type="spacer" name="spacer0" hr="true" />
 
 			<field type="radio" name="showname" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWNAME" default="1" class="btn-group btn-group-yesno">
