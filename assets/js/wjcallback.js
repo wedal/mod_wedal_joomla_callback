@@ -54,14 +54,19 @@
                            type: 'POST',
                            url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm',
                            data: $(this).serialize(),
+						   dataType: 'json',
                            success: function(data)
                            {
-                             console.log(data);
-                           }
+	                            console.log(data);
+								alert(data['message']);
+
+								if (!data['error']) {
+								 	wjcmodal_remove(wjcmodal);
+	                           	}
+							}
                          });
 
-                        alert('Спасибо за запрос. В ближайшее время мы с вами свяжемся.');
-						wjcmodal_remove(wjcmodal);
+
                     }
                  });
 

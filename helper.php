@@ -50,14 +50,24 @@ class ModWedalJoomlaCallbackHelper
 
 	}
 
+	public static function checkRequired($formfields)
+	{
+		$checked = true;
+		foreach ($formfields as $formfield) {
+			if ($formfield['show'] && $formfield['req'] && !$formfield['value']) {
+				$checked = false;
+			}
+		}
+
+		return $checked;
+	}
+
 	public static function getFormAjax()
 	{
 		$params = ModWedalJoomlaCallbackHelper::getParams();
 		$moduleId = $params->get('moduleid', '');
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 		$formfields = $params->get('formfields', '');
-
-
 		require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_form');
 		return;
 	}
@@ -70,33 +80,39 @@ class ModWedalJoomlaCallbackHelper
 
 		$formfields = $params->get('formfields', '');
 
+		//Check required fields
+
 		foreach ($formfields as $key => &$formfield) {
 			if ($formfield['show']) {
 				$formfield['value'] = $jinput->get('WJCForm'.$moduleId.'_'.$key, '', 'STRING');
 			}
 		}
 
-		$config = & JFactory::getConfig();
+		$checked = ModWedalJoomlaCallbackHelper::checkRequired($formfields);
 
-		$mailtitle = $params->get('mailtitle', '');
-		if (!$mailtitle) {
-			$mailtitle = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT');
-		}
+		if ($checked) {
+			$config = & JFactory::getConfig();
 
-		$email =  $params->get('email', '');
-		if (!$email) {
-			$email = $config->get('mailfrom');
-		}
+			$mailtitle = $params->get('mailtitle', '');
+			if (!$mailtitle) {
+				$mailtitle = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT');
+			}
 
-echo '<pre>';
-    print_r($mailtitle);
-echo '</pre>';
-echo '<pre>';
-    print_r($email);
-echo '</pre>';
+			$email =  $params->get('email', '');
+			if (!$email) {
+				$email = $config->get('mailfrom');
+			}
 
+			$email =  $params->get('email', '');
+			if (!$email) {
+				$email = $config->get('mailfrom');
+			}
 
-	//	if(isset($input_name)){
+			$thankyoutext = $params->get('thankyoutext', '');
+			if (!$thankyoutext) {
+				$thankyoutext = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT');
+			}
+
 
 			ob_start();
 			htmlspecialchars(require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_message'), ENT_QUOTES);
@@ -115,7 +131,13 @@ echo '</pre>';
 			$mailer->isHTML();
 			$mailer->send();
 
-	//	}
+			echo json_encode(Array('message' => $thankyoutext, 'error' => 0));
+
+		} else {
+
+			echo json_encode(Array('message' => JText::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
+
+		}
 
 	    return;
 	}
