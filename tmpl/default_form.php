@@ -12,9 +12,11 @@
 
         		<div class="modal-body">
 
-        			<div class="informtext one-click-desc">
-        				<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_DESC'); ?>
-        			</div>
+                    <?php if ($formdesc) { ?>
+            			<div class="informtext one-click-desc">
+            				<?php echo $formdesc; ?>
+            			</div>
+                    <?php } ?>
 
                     <?php if ($formfields->name['show']) { ?>
             			<div class="inputcont">

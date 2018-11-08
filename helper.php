@@ -67,6 +67,7 @@ class ModWedalJoomlaCallbackHelper
 		$params = ModWedalJoomlaCallbackHelper::getParams();
 		$moduleId = $params->get('moduleid', '');
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$formdesc = $params->get('formdesc', '');
 		$formfields = $params->get('formfields', '');
 		require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_form');
 		return;
@@ -77,7 +78,7 @@ class ModWedalJoomlaCallbackHelper
 
 		//Check token
 		if (!JSession::checkToken()) {
-			echo json_encode(Array('message' => JText::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));	
+			echo json_encode(Array('message' => JText::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
 			return;
 		}
 
