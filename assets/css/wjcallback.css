@@ -1,5 +1,6 @@
 #wjcallback-modal {
     position: fixed;
+    text-align: center;
     top: 0;
     right: 0;
     bottom: 0;
@@ -24,8 +25,12 @@
 }
 
 #wjcallback-modal .wjcallbackform {
-    width: 600px;
-    margin: 30px auto;
+    display: inline-block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: auto;
+    text-align: left;
     box-sizing: border-box;
     background: #FFF;
     opacity: 0;
@@ -33,9 +38,42 @@
     -moz-transition: opacity .5s ease-out;
     -o-transition: opacity .5s ease-out;
     transition: opacity .5s ease-out;
+    transform: translate(-50%, -50%);
 }
 
 #wjcallback-modal.show .wjcallbackform {
-    margin-top: 30px;
     opacity: 1;
+}
+
+/* Preloader
+*********************************************/
+#wjcallback-loader {
+	position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1060;
+}
+
+#wjcallback-loader::after {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #E92D00;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+	position: fixed;
+	margin: 0 auto;
+	top: 50%;
+	left: 0;
+	right: 0;
+	margin-top: -40px;
+	content: "";
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

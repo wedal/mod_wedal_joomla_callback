@@ -5,10 +5,9 @@ defined('_JEXEC') or die;
 /*
 @// TODO:
 
-3) Antispam
 4) Form design
 5) English translation
-6) Loader
+6) Backend desc
 
 */
 

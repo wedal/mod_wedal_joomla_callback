@@ -2,10 +2,14 @@
     $(document).ready(function() {
         $('.wjcallback').on('click', '.wjcallback-link', function(event) {
             event.preventDefault();
+
             $('body').append('<div id="wjcallback-modal"></div>');
+			$('body').append('<div id="wjcallback-loader"></div>');
+			var loader = $('#wjcallback-loader');
+
             var wjcmodal = $('#wjcallback-modal');
             wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm', function() {
-
+				loader.remove();
                 wjcmodal.addClass('show');
 
                 $(document).on('mouseup', function(event) {
@@ -43,14 +47,16 @@
                         alert(wjcmodal.find('#' + wjcmodal_id + '_comment').attr('data-error'));
 
                     } else {
-
+						$('body').append('<div id="wjcallback-loader"></div>');
+						var loader = $('#wjcallback-loader');
                         $.ajax({
                             type: 'POST',
                             url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm',
                             data: $(this).serialize(),
                             dataType: 'json',
                             success: function(data) {
-                                console.log(data);
+                                //console.log(data);
+								loader.remove();
                                 alert(data['message']);
 
                                 if (!data['error']) {
