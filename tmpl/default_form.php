@@ -43,6 +43,7 @@
         		</div>
 
         		<div class="modal-footer">
+                    <?php echo JHtml::_( 'form.token' ); ?>
         			<button class="btn" type="submit"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
         		</div>
 

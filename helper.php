@@ -74,6 +74,13 @@ class ModWedalJoomlaCallbackHelper
 
 	public static function sendFormAjax()
 	{
+
+		//Check token
+		if (!JSession::checkToken()) {
+			echo json_encode(Array('message' => JText::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));	
+			return;
+		}
+
 		$params = ModWedalJoomlaCallbackHelper::getParams();
 		$moduleId = $params->get('moduleid', '');
 		$jinput = JFactory::getApplication()->input;
@@ -81,7 +88,6 @@ class ModWedalJoomlaCallbackHelper
 		$formfields = $params->get('formfields', '');
 
 		//Check required fields
-
 		foreach ($formfields as $key => &$formfield) {
 			if ($formfield['show']) {
 				$formfield['value'] = $jinput->get('WJCForm'.$moduleId.'_'.$key, '', 'STRING');
