@@ -8,6 +8,7 @@ defined('_JEXEC') or die;
 3) Antispam + Token
 4) Form design
 5) English translation
+6) Loader
 
 */
 
