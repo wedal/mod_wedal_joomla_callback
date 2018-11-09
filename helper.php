@@ -8,15 +8,14 @@ defined('_JEXEC') or die;
 class ModWedalJoomlaCallbackHelper
 {
 
-	public static function getParams()
+	public static function getParams($moduleId)
     {
-        jimport('joomla.application.module.helper');
-        $module = JModuleHelper::getModule('wedal_joomla_callback');
+        //jimport('joomla.application.module.helper');
+        //$module = JModuleHelper::getModuleById($moduleId); //--->> It can be use for Joomla 3.9.0+
+		$module = ModWedalJoomlaCallbackHelper::getModuleById($moduleId); // It use for Joomla < 3.9.0 for legacy reason
 
 		$params = new JRegistry;
         $params->loadString($module->params);
-
-		$moduleId = $params->get('moduleid', '');
 
 		$formfields = new stdClass();
 
@@ -64,8 +63,10 @@ class ModWedalJoomlaCallbackHelper
 
 	public static function getFormAjax()
 	{
-		$params = ModWedalJoomlaCallbackHelper::getParams();
-		$moduleId = $params->get('moduleid', '');
+		$jinput = JFactory::getApplication()->input;
+		$moduleId = $jinput->get('modid', null, 'int');
+		$params = ModWedalJoomlaCallbackHelper::getParams($moduleId);
+
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 		$formdesc = $params->get('formdesc', '');
 		$formfields = $params->get('formfields', '');
@@ -82,9 +83,9 @@ class ModWedalJoomlaCallbackHelper
 			return;
 		}
 
-		$params = ModWedalJoomlaCallbackHelper::getParams();
-		$moduleId = $params->get('moduleid', '');
 		$jinput = JFactory::getApplication()->input;
+		$moduleId = $jinput->get('modid', null, 'int');
+		$params = ModWedalJoomlaCallbackHelper::getParams($moduleId);
 
 		$formfields = $params->get('formfields', '');
 
@@ -141,11 +142,29 @@ class ModWedalJoomlaCallbackHelper
 			echo json_encode(Array('message' => $thankyoutext, 'error' => 0));
 
 		} else {
-
 			echo json_encode(Array('message' => JText::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
-
 		}
 
 	    return;
+	}
+
+	/**
+	 * Get module by id
+	 //----------> Use it for Joomla < 3.9.0
+	 */
+	public static function &getModuleById($id)
+	{
+		jimport('joomla.application.module.helper');
+		$modules = JModuleHelper::getModuleList();
+
+		foreach ($modules as $module)
+		{
+			if ($module->id == $id)
+			{
+				return $module;
+			}
+		}
+
+		return false;
 	}
 }

@@ -6,9 +6,9 @@
             $('body').append('<div id="wjcallback-modal"></div>');
 			$('body').append('<div id="wjcallback-loader"></div>');
 			var loader = $('#wjcallback-loader');
-
             var wjcmodal = $('#wjcallback-modal');
-            wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm', function() {
+			var module_id = $(this).closest(".wjcallback").attr('data-id');
+            wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid='+module_id, function() {
 				loader.remove();
                 wjcmodal.addClass('show');
 
@@ -51,7 +51,7 @@
 						var loader = $('#wjcallback-loader');
                         $.ajax({
                             type: 'POST',
-                            url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm',
+                            url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+wjcmodal_id,
                             data: $(this).serialize(),
                             dataType: 'json',
                             success: function(data) {
