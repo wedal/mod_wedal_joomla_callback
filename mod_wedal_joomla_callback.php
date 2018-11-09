@@ -2,14 +2,7 @@
 
 defined('_JEXEC') or die;
 
-/*
-@// TODO:
-5) English translation
-*/
-
-
 $doc = JFactory::getDocument();
-
 JHtml::_('jquery.framework');
 
 $doc->addScript('/modules/'.$module->module.'/assets/js/wjcallback.js');
