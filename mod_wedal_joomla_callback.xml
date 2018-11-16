@@ -145,6 +145,6 @@
 
 <updateservers>
 	<server type="extension" enabled="1" element="mod_wedal_joomla_callback" name="Wedal Joomla Callback">https://raw.githubusercontent.com/wedal/mod_wedal_joomla_callback/master/update.xml</server>
-</updateservers> 
+</updateservers>
 
 </extension>
