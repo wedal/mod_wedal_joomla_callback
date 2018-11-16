@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+	<update>
+		<name>Wedal Joomla Callback</name>
+		<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
+		<element>mod_wedal_joomla_callback</element>
+		<type>module</type>
+		<version>1.0.0</version>
+		<client>site</client>
+		<infourl title="Wedal Joomla Callback">https://github.com/wedal/mod_wedal_joomla_callback</infourl>
+		<downloads>
+			<downloadurl type="full" format="zip">https://github.com/wedal/mod_wedal_joomla_callback/archive/master.zip</downloadurl>
+		</downloads>
+		<targetplatform name="joomla" version="3.[23456789]" />
+	</update>
+</updates>
