@@ -69,6 +69,9 @@ class ModWedalJoomlaCallbackHelper
 
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 		$formdesc = $params->get('formdesc', '');
+		if ($params->get('showformtitle', '1')) {
+		    $formtitle = $params->get('formtitle', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
+		}
 		$formfields = $params->get('formfields', '');
 		require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_popupform');
 		return;
@@ -103,7 +106,7 @@ class ModWedalJoomlaCallbackHelper
 
 			$mailtitle = $params->get('mailtitle', '');
 			if (!$mailtitle) {
-				$mailtitle = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT');
+				$mailtitle = JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
 			}
 
 			$email =  $params->get('email', '');

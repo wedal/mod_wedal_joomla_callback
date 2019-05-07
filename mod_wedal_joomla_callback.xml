@@ -31,7 +31,7 @@
 			  <option value="1">MOD_WEDAL_JOOMLA_CALLBACK_TYPE_INSERT</option>
 			</field>
 
-			<field name="buttontext" showon="moduletype:0" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
+			<field name="buttontext" showon="moduletype:0" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
 
 			<field
 				name="email"
@@ -43,7 +43,14 @@
 				validate="email"
 			/>
 
-			<field name="mailtitle" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE" description="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DESC"  />
+			<field name="mailtitle" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT" label="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE" description="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DESC"  />
+
+			<field type="radio" name="showformtitle" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWFORMTITLE_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWFORMTITLE" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field name="formtitle" type="text" default="" showon="showformtitle:1" hint="MOD_WEDAL_JOOMLA_CALLBACK_TITLE" label="MOD_WEDAL_JOOMLA_CALLBACK_FORMTITLE" description="MOD_WEDAL_JOOMLA_CALLBACK_FORMTITLE_DESC"  />
 
 			<field name="formdesc" type="textarea" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_FORMDESC" description="MOD_WEDAL_JOOMLA_CALLBACK_FORMDESC_DESC" rows="10" cols="5" />
 

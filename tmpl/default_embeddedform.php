@@ -4,9 +4,12 @@
     <div class="wjcallbackform-wrapper">
     	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 
-    		<div class="form-header">
-    			<h2 class="form-title"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'); ?></h2>
-    		</div>
+            <?php if ($formtitle) { ?>
+                <div class="form-header">
+                    <h2 class="form-title"><?php echo $formtitle ?></h2>
+                </div>
+            <?php } ?>
+
 
     		<div class="form-body">
 
