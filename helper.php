@@ -70,7 +70,7 @@ class ModWedalJoomlaCallbackHelper
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 		$formdesc = $params->get('formdesc', '');
 		$formfields = $params->get('formfields', '');
-		require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_form');
+		require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_popupform');
 		return;
 	}
 
