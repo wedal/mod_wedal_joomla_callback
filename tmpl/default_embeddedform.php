@@ -1,7 +1,7 @@
 <?php defined('_JEXEC') or die('Restricted access'); ?>
 
 <div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform embeddedform <?php echo $moduleclass_sfx ?>">
-    <div class="wjcallbackform-wrapper">
+    <div class="wjcallbackform-wrapper message-container">
     	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 
             <?php if ($formtitle) { ?>
@@ -11,7 +11,7 @@
             <?php } ?>
 
 
-    		<div class="form-body">
+    		<div class="form-body message-container">
 
                 <?php if ($formdesc) { ?>
         			<div class="informtext one-click-desc">
