@@ -2,7 +2,6 @@
     $(document).ready(function() {
         $('.wjcallback').on('click', '.wjcallback-link', function(event) {
             event.preventDefault();
-
             $('body').append('<div id="wjcallback-modal"></div>');
 			$('body').append('<div id="wjcallback-loader"></div>');
 			var loader = $('#wjcallback-loader');
@@ -24,31 +23,15 @@
                     wjcmodal_remove(wjcmodal);
                 });
 
-                wjcmodal.on('submit', 'form', function(event) {
-                    event.preventDefault();
-
-                    wjcmodal_id = wjcmodal.find('.wjcallbackform').attr('id');
-
-                    if (form_validate(wjcmodal_id)) {
-						$('body').append('<div id="wjcallback-loader"></div>');
-						var loader = $('#wjcallback-loader');
-                        $.ajax({
-                            type: 'POST',
-                            url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+wjcmodal_id,
-                            data: $(this).serialize(),
-                            dataType: 'json',
-                            success: function(data) {
-                                //console.log(data);
-								loader.remove();
-                                $('#WJCForm'+module_id+' .modal-footer').hide();
-                                $('#WJCForm'+module_id+' .modal-body').html(data['message']);
-                            }
-                        });
-                    }
-                });
+                wjcform_submit(wjcmodal);
 
             }); // End Load
         });
+
+        $('.wjcallbackform.embeddedform').each(function(index, el) {
+            wjcform_submit($(this));
+        });
+
     });
 
     function wjcmodal_remove(wjcmodal) {
@@ -58,8 +41,8 @@
         }, 500);
     };
 
-    function form_validate(wjcmodal_id) {
-        var wjcmodal = $('#wjcallback-modal');
+    function wjcform_validate(wjcmodal_id) {
+        var wjcmodal = $('#WJCForm'+wjcmodal_id);
         window.reEmail = /^([a-z0-9\.\-\_])+\@(([a-zA-Z0-9\-\_])+\.)+([a-zA-Z0-9]{2,6})+$/i;
         if (!wjcmodal.find('#' + wjcmodal_id + '_name').val() && wjcmodal.find('#' + wjcmodal_id + '_name').hasClass('required')) {
             wjcmodal.find('#' + wjcmodal_id + '_name').focus();
@@ -83,6 +66,32 @@
         } else {
             return true;
         }
+    };
+
+    function wjcform_submit(wjcmodal) {
+        wjcmodal.on('submit', 'form', function(event) {
+            event.preventDefault();
+            var module_id = $(this).closest(".wjcallbackform").attr('data-id');
+            var wjcmodal = $('#WJCForm'+module_id);
+
+            if (wjcform_validate(module_id)) {
+                $('body').append('<div id="wjcallback-loader"></div>');
+                var loader = $('#wjcallback-loader');
+                $.ajax({
+                    type: 'POST',
+                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id,
+                    data: $(this).serialize(),
+                    dataType: 'json',
+                    success: function(data) {
+                        //console.log(data);
+                        loader.remove();
+                        $('#WJCForm'+module_id+' .modal-footer').hide();
+                        $('#WJCForm'+module_id+' .modal-body').html(data['message']);
+                    }
+                });
+            }
+        });
+        return true;
     };
 
 })(jQuery);

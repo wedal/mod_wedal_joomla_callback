@@ -1,17 +1,16 @@
 <?php defined('_JEXEC') or die('Restricted access'); ?>
 
-<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform embeddedform <?php echo $moduleclass_sfx ?>">
+<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform embeddedform <?php echo $moduleclass_sfx ?>" data-id="<?php echo $moduleId ?>">
     <div class="wjcallbackform-wrapper message-container">
     	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 
             <?php if ($formtitle) { ?>
-                <div class="form-header">
+                <div class="modal-header">
                     <h2 class="form-title"><?php echo $formtitle ?></h2>
                 </div>
             <?php } ?>
 
-
-    		<div class="form-body message-container">
+    		<div class="modal-body message-container">
 
                 <?php if ($formdesc) { ?>
         			<div class="informtext one-click-desc">
@@ -45,7 +44,7 @@
 
     		</div>
 
-    		<div class="form-footer">
+    		<div class="modal-footer">
                 <?php echo JHtml::_( 'form.token' ); ?>
     			<button class="btn" type="submit"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
     		</div>
