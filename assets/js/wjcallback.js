@@ -41,8 +41,11 @@
         }, 500);
     };
 
-    function wjcform_validate(wjcmodal_id) {
-        var wjcmodal = $('#WJCForm'+wjcmodal_id);
+    function wjcform_validate(module_id) {
+
+        var wjcmodal = $('#WJCForm'+module_id);
+        var wjcmodal_id = 'WJCForm'+module_id;
+
         window.reEmail = /^([a-z0-9\.\-\_])+\@(([a-zA-Z0-9\-\_])+\.)+([a-zA-Z0-9]{2,6})+$/i;
         if (!wjcmodal.find('#' + wjcmodal_id + '_name').val() && wjcmodal.find('#' + wjcmodal_id + '_name').hasClass('required')) {
             wjcmodal.find('#' + wjcmodal_id + '_name').focus();
