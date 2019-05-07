@@ -26,7 +26,12 @@
 	<fields name="params">
 		<fieldset name="basic">
 
-			<field name="buttontext" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
+			<field name="moduletype" type="list" default="0" label="MOD_WEDAL_JOOMLA_CALLBACK_TYPE" description="MOD_WEDAL_JOOMLA_CALLBACK_TYPE_DESC">
+			  <option value="0">MOD_WEDAL_JOOMLA_CALLBACK_TYPE_MODAL</option>
+			  <option value="1">MOD_WEDAL_JOOMLA_CALLBACK_TYPE_INSERT</option>
+			</field>
+
+			<field name="buttontext" showon="moduletype:0" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFALT" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"  />
 
 			<field
 				name="email"
