@@ -5,7 +5,7 @@
 		<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
 		<element>mod_wedal_joomla_callback</element>
 		<type>module</type>
-		<version>1.0.2</version>
+		<version>1.1.0</version>
 		<client>site</client>
 		<infourl title="Wedal Joomla Callback">https://github.com/wedal/mod_wedal_joomla_callback</infourl>
 		<downloads>
