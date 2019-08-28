@@ -24,7 +24,7 @@
 
 	<config>
 	<fields name="params">
-		<fieldset name="basic">
+		<fieldset name="basic" addfieldpath="/administrator/components/com_content/models/fields">
 
 			<field name="moduletype" type="list" default="0" label="MOD_WEDAL_JOOMLA_CALLBACK_TYPE" description="MOD_WEDAL_JOOMLA_CALLBACK_TYPE_DESC">
 			  <option value="0">MOD_WEDAL_JOOMLA_CALLBACK_TYPE_MODAL</option>
@@ -104,9 +104,25 @@
 
 			<field type="spacer" name="spacer4" hr="true" />
 
-			<field name="thankyoutext" type="textarea" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT" label="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU" description="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU_DESC" rows="10" cols="5" />
+			<field type="radio" name="showtos" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTOS_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTOS" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field name="toslinktext" type="text" default="" showon="showtos:1" hint="MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE" label="MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT" description="MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_DESC"  />
+
+			<field name="toslink" type="modal_article" default="" showon="showtos:1" label="MOD_WEDAL_JOOMLA_CALLBACK_TOSLINK" description="MOD_WEDAL_JOOMLA_CALLBACK_TOSLINK_DESC" />
+
+			<field type="radio" name="toscheckbox" showon="showtos:1" description="MOD_WEDAL_JOOMLA_CALLBACK_TOSCHECKBOX_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_TOSCHECKBOX" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
 
 			<field type="spacer" name="spacer5" hr="true" />
+
+			<field name="thankyoutext" type="textarea" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT" label="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU" description="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU_DESC" rows="10" cols="5" />
+
+			<field type="spacer" name="spacer6" hr="true" />
 
 		</fieldset>
 
