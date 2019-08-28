@@ -56,7 +56,7 @@
     box-sizing: border-box;
 }
 
-#wjcallback-modal .form-validate input,
+#wjcallback-modal .form-validate input[type="text"],
 #wjcallback-modal .form-validate textarea {
     width: 100%;
     box-sizing: border-box;

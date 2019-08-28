@@ -31,6 +31,25 @@ class ModWedalJoomlaCallbackHelper
 		$formfields->comment['show'] = $params->get('showtextarea', '');
 		$formfields->comment['req'] = ModWedalJoomlaCallbackHelper::getRequired($params->get('showtextareareq', ''));
 
+		$formfields->tos['show'] = $params->get('showtos', '');
+		$formfields->tos['toslink'] = $params->get('toslink', '#');
+
+		if ($formfields->tos['show'] && $formfields->tos['toslink'] != '#') {
+			/*
+			JLoader::register('ContentHelperRoute', JPATH_SITE . '/components/com_content/helpers/route.php');
+ 			JModelLegacy::addIncludePath(JPATH_SITE . '/components/com_content/models', 'ContentModel');
+			$article = JModelLegacy::getInstance('Articles', 'ContentModel', array('ignore_request' => true));
+			$article->setState('article.id', 3);
+			$article->setState('filter.published', 1);
+			$items   = $article->getItem();
+			*/
+			$tos_article =  JControllerLegacy::getInstance('Content')->getModel('Article')->getItem($formfields->tos['toslink']);
+			$formfields->tos['toslink'] =  JRoute::_(ContentHelperRoute::getArticleRoute($formfields->tos['toslink'], $tos_article->catid, $tos_article->language));
+		}
+
+		$formfields->tos['toslinktext'] = $params->get('toslinktext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE'));
+		$formfields->tos['toscheckbox'] = $params->get('toscheckbox', '');
+
 		$params->set('moduleid', $module->id);
 		$params->set('formfields', $formfields);
 

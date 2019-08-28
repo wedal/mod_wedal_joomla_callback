@@ -46,13 +46,26 @@
                         </div>
                     <?php } ?>
 
+                    <?php if ($formfields->tos['show']) { ?>
+                        <div class="inputcont">
+                            <label id="WJCForm<?php echo $moduleId ?>_tos" class="tos">
+                                <?php if ($formfields->tos['toscheckbox']) { ?>
+                                    <input id="WJCForm<?php echo $moduleId ?>_tos_box" type="checkbox" class="tos-box required" name="tos_box" value="1" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TOS_ERROR');  ?>">
+                                <?php } ?>
+                                <span><?php echo JText::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $formfields->tos['toslink'], $formfields->tos['toslinktext']); ?></span>
+                                <?php if ($formfields->tos['toscheckbox']) { ?>
+                                    <span>*</span>
+                                <?php } ?>
+                            </label>
+                        </div>
+                    <?php } ?>
+
         		</div>
 
         		<div class="modal-footer">
                     <?php echo JHtml::_( 'form.token' ); ?>
         			<button class="btn" type="submit"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
         		</div>
-
         	</form>
         </div>
     </div>

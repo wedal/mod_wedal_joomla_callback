@@ -36,9 +36,23 @@
                     </div>
                 <?php } ?>
 
-                <?php if ($formfields->comment['show']) { ?>
+                <?php if ($formfields->tos['show']) { ?>
                     <div class="inputcont">
                         <textarea id="WJCForm<?php echo $moduleId ?>_comment"  rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?> <?php echo $formfields->comment['req'][0] ?>" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MESSAGE_ERROR');  ?>" name="WJCForm<?php echo $moduleId ?>_comment" class="customer-comment <?php echo $formfields->comment['req'][1] ?>"></textarea>
+                    </div>
+                <?php } ?>
+
+                <?php if ($formfields->tos['show']) { ?>
+                    <div class="inputcont">
+                        <label id="WJCForm<?php echo $moduleId ?>_tos" class="tos">
+                            <?php if ($formfields->tos['toscheckbox']) { ?>
+                                <input id="WJCForm<?php echo $moduleId ?>_tos_box" type="checkbox" class="tos-box required" name="tos_box" value="1" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TOS_ERROR');  ?>">
+                            <?php } ?>
+                            <span><?php echo JText::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $formfields->tos['toslink'], $formfields->tos['toslinktext']); ?></span>
+                            <?php if ($formfields->tos['toscheckbox']) { ?>
+                                <span>*</span>
+                            <?php } ?>
+                        </label>
                     </div>
                 <?php } ?>
 
