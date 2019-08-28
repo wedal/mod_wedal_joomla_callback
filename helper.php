@@ -35,15 +35,13 @@ class ModWedalJoomlaCallbackHelper
 		$formfields->tos['toslink'] = $params->get('toslink', '#');
 
 		if ($formfields->tos['show'] && $formfields->tos['toslink'] != '#') {
-			/*
 			JLoader::register('ContentHelperRoute', JPATH_SITE . '/components/com_content/helpers/route.php');
  			JModelLegacy::addIncludePath(JPATH_SITE . '/components/com_content/models', 'ContentModel');
-			$article = JModelLegacy::getInstance('Articles', 'ContentModel', array('ignore_request' => true));
-			$article->setState('article.id', 3);
+			$article = JModelLegacy::getInstance('Article', 'ContentModel', array('ignore_request' => true));
+			$article->setState('article.id', $formfields->tos['toslink']);
 			$article->setState('filter.published', 1);
-			$items   = $article->getItem();
-			*/
-			$tos_article =  JControllerLegacy::getInstance('Content')->getModel('Article')->getItem($formfields->tos['toslink']);
+			$article->setState('params', jFactory::getApplication()->getParams());
+			$tos_article   = $article->getItem();
 			$formfields->tos['toslink'] =  JRoute::_(ContentHelperRoute::getArticleRoute($formfields->tos['toslink'], $tos_article->catid, $tos_article->language));
 		}
 
