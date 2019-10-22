@@ -24,6 +24,8 @@ if ($params->get('showformtitle', '1')) {
 }
 $formdesc = $params->get('formdesc', '');
 
+$jinput = JFactory::getApplication()->input;
+$itemid = $jinput->get('Itemid', null, 'int');
 
 if ($moduletype == 1) {
     require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_embeddedform');

@@ -82,6 +82,7 @@ class ModWedalJoomlaCallbackHelper
 	{
 		$jinput = JFactory::getApplication()->input;
 		$moduleId = $jinput->get('modid', null, 'int');
+		$itemid = $jinput->get('Itemid', null, 'int');
 		$params = ModWedalJoomlaCallbackHelper::getParams($moduleId);
 
 		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');

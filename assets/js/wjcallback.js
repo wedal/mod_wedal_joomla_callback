@@ -7,7 +7,11 @@
 			var loader = $('#wjcallback-loader');
             var wjcmodal = $('#wjcallback-modal');
 			var module_id = $(this).closest(".wjcallback").attr('data-id');
-            wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid='+module_id, function() {
+            var itemid = $(this).closest(".wjcallback").attr('data-itemid');
+            if (itemid) {
+                itemid = '&Itemid=' + itemid;
+            }
+            wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid='+module_id+itemid, function() {
 				loader.remove();
                 wjcmodal.addClass('show');
 
@@ -23,6 +27,7 @@
                     wjcmodal_remove(wjcmodal);
                 });
 
+                wjcmodal.itemid = itemid;
                 wjcform_submit(wjcmodal);
 
             }); // End Load
@@ -83,13 +88,17 @@
             event.preventDefault();
             var module_id = $(this).closest(".wjcallbackform").attr('data-id');
             var wjcmodal = $('#WJCForm'+module_id);
+            var itemid = $(this).closest(".wjcallbackform").attr('data-itemid');
+            if (itemid) {
+                itemid = '&Itemid=' + itemid;
+            }
 
             if (wjcform_validate(module_id)) {
                 $('body').append('<div id="wjcallback-loader"></div>');
                 var loader = $('#wjcallback-loader');
                 $.ajax({
                     type: 'POST',
-                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id,
+                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id+itemid,
                     data: $(this).serialize(),
                     dataType: 'json',
                     success: function(data) {

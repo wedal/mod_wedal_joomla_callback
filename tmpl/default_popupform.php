@@ -1,6 +1,6 @@
 <?php defined('_JEXEC') or die('Restricted access'); ?>
 
-<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform <?php echo $moduleclass_sfx ?>" role="dialog" data-id="<?php echo $moduleId ?>">
+<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform <?php echo $moduleclass_sfx ?>" role="dialog" data-id="<?php echo $moduleId ?>" data-itemid="<?php echo $itemid ?>">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
         	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">

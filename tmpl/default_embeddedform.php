@@ -1,6 +1,6 @@
 <?php defined('_JEXEC') or die('Restricted access'); ?>
 
-<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform embeddedform <?php echo $moduleclass_sfx ?>" data-id="<?php echo $moduleId ?>">
+<div id="WJCForm<?php echo $moduleId ?>" class="wjcallbackform embeddedform <?php echo $moduleclass_sfx ?>" data-id="<?php echo $moduleId ?>" data-itemid="<?php echo $itemid ?>">
     <div class="wjcallbackform-wrapper message-container">
     	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 
