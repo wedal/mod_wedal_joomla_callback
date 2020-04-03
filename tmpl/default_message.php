@@ -26,4 +26,7 @@
         </div>
     <?php } ?>
 
+    <?php if ($page_url) { ?>
+        <div><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL').$page_url ?></div>
+    <?php } ?>
 </div>

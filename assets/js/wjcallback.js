@@ -98,7 +98,7 @@
                 var loader = $('#wjcallback-loader');
                 $.ajax({
                     type: 'POST',
-                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id+itemid,
+                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
                     data: $(this).serialize(),
                     dataType: 'json',
                     success: function(data) {

@@ -106,6 +106,8 @@ class ModWedalJoomlaCallbackHelper
 
 		$jinput = JFactory::getApplication()->input;
 		$moduleId = $jinput->get('modid', null, 'int');
+		$page_url = urldecode($jinput->get('page', null, 'STRING'));
+
 		$params = ModWedalJoomlaCallbackHelper::getParams($moduleId);
 
 		$formfields = $params->get('formfields', '');
