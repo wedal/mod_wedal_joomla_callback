@@ -154,6 +154,7 @@ class ModWedalJoomlaCallbackHelper
 
 			$mailer = JFactory::getMailer();
 			$mailer->setSender($from);
+			$mailer->addReplyTo($from);
 			$mailer->addRecipient($to);
 			$mailer->setSubject($subject);
 			$mailer->setBody($body);
