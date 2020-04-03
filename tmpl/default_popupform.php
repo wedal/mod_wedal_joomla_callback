@@ -70,3 +70,15 @@
         </div>
     </div>
 </div>
+
+<?php if ($params->get('showphonemask')) {
+    echo '
+    <script src="/modules/mod_wedal_joomla_callback/assets/js/jquery.maskedinput.min.js" charset="utf-8"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+           $("#WJCForm'.$moduleId.'_phone").mask("'.$params->get('phonemasktype', JText::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'");
+        });
+    </script>
+    ';
+    }
+?>

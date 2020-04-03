@@ -66,3 +66,14 @@
     	</form>
     </div>
 </div>
+
+<?php if ($params->get('showphonemask')) {
+    echo '
+    <script type="text/javascript">
+        jQuery(document).ready(function($) {
+           $("#WJCForm'.$moduleId.'_phone").mask("'.$params->get('phonemasktype', JText::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'");
+        });
+    </script>
+    ';
+    }
+?>

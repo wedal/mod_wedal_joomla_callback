@@ -90,6 +90,13 @@
 				<option value="0">JNO</option>
 			</field>
 
+			<field type="radio" name="showphonemask" showon="showphone:1" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASK_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASK" default="0" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field name="phonemasktype" type="text" default="" showon="showphonemask:1" hint="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_DESC"  />
+
 			<field type="spacer" name="spacer3" hr="true" />
 
 			<field type="radio" name="showtextarea" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWTEXTAREA" default="1" class="btn-group btn-group-yesno">

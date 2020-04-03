@@ -27,6 +27,10 @@ $formdesc = $params->get('formdesc', '');
 $jinput = JFactory::getApplication()->input;
 $itemid = $jinput->get('Itemid', null, 'int');
 
+if ($params->get('showphonemask') && $moduletype == 1) {
+    $doc->addScript('/modules/'.$module->module.'/assets/js/jquery.maskedinput.min.js');
+}
+
 if ($moduletype == 1) {
     require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_embeddedform');
 } else {
