@@ -120,7 +120,7 @@ class ModWedalJoomlaCallbackHelper
 		$checked = ModWedalJoomlaCallbackHelper::checkRequired($formfields);
 
 		if ($checked) {
-			$config = & JFactory::getConfig();
+			$config = JFactory::getConfig();
 
 			$mailtitle = $params->get('mailtitle', '');
 			if (!$mailtitle) {
@@ -154,7 +154,11 @@ class ModWedalJoomlaCallbackHelper
 
 			$mailer = JFactory::getMailer();
 			$mailer->setSender($from);
-			$mailer->addReplyTo($from);
+
+			if ($formfields->email['value']) {
+				$mailer->addReplyTo($formfields->email['value']);
+			}
+
 			$mailer->addRecipient($to);
 			$mailer->setSubject($subject);
 			$mailer->setBody($body);
