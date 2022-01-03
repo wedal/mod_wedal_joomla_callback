@@ -11,6 +11,7 @@ $doc->addStyleSheet('/modules/'.$module->module.'/assets/css/wjcallback.css');
 JLoader::register('ModWedalJoomlaCallbackHelper', __DIR__ . '/helper.php');
 
 // Get params
+
 $moduleId = $module->id;
 $buttontext = $params->get('buttontext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
 $thankyoutext = $params->get('thankyoutext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
