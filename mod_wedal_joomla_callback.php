@@ -2,38 +2,33 @@
 
 defined('_JEXEC') or die;
 
-$doc = JFactory::getDocument();
-JHtml::_('jquery.framework');
+use Joomla\CMS\Factory;
+use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\Module\WedalJoomlaCallback\Site\Helper\WedalJoomlaCallbackHelper;
 
-$doc->addScript('/modules/'.$module->module.'/assets/js/wjcallback.js');
-$doc->addStyleSheet('/modules/'.$module->module.'/assets/css/wjcallback.css');
-
-JLoader::register('ModWedalJoomlaCallbackHelper', __DIR__ . '/helper.php');
+HTMLHelper::_('script','mod_wedal_joomla_callback/wjcallback.js',	['relative' => true], ['defer ' => 'defer']);
+HTMLHelper::_('stylesheet','mod_wedal_joomla_callback/wjcallback.css',	['relative' => true], ['defer ' => 'defer']);
 
 // Get params
+$buttontext = $params->get('buttontext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'), '');
+$thankyoutext = $params->get('thankyoutext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
 
-$moduleId = $module->id;
-$buttontext = $params->get('buttontext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
-$thankyoutext = $params->get('thankyoutext', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
-$moduletype = $params->get('moduletype', 0);
 $moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
-$params = ModWedalJoomlaCallbackHelper::getParams($moduleId);
-$formfields = $params->get('formfields');
-$formdesc = $params->get('formdesc', '');
-if ($params->get('showformtitle', '1')) {
-    $formtitle = $params->get('formtitle', JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
-}
 $formdesc = $params->get('formdesc', '');
 
-$jinput = JFactory::getApplication()->input;
+if ($params->get('showformtitle', '1')) {
+	$formtitle = $params->get('formtitle', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
+}
+
+$form = new WedalJoomlaCallbackHelper ($params);
+
+$jinput = Factory::getApplication()->input;
 $itemid = $jinput->get('Itemid', null, 'int');
 
-if ($params->get('showphonemask') && $moduletype == 1) {
-    $doc->addScript('/modules/'.$module->module.'/assets/js/jquery.maskedinput.min.js');
+if ($params->get('showphonemask') && $form->moduletype == 1) {
+	HTMLHelper::_('script','mod_wedal_joomla_callback/wjcallback.js',	['relative' => true], ['defer ' => 'defer']);
 }
 
-if ($moduletype == 1) {
-    require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_embeddedform');
-} else {
-    require JModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default'));
-}
+require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . $form->moduletype ? '_embeddedform' : '' );

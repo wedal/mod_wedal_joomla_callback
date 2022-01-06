@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="module" version="3.1" client="site" method="upgrade">
+<extension type="module" version="3.10" client="site" method="upgrade">
 	<name>Wedal Joomla Callback</name>
 	<author>Wedal</author>
 	<creationDate>2018</creationDate>
@@ -7,19 +7,25 @@
 	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 	<authorEmail>wedal@wedal.ru</authorEmail>
 	<authorUrl>wedal.ru</authorUrl>
-	<version>1.2.0</version>
+	<version>2.0.0</version>
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
+    <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
 		<filename module="mod_wedal_joomla_callback">mod_wedal_joomla_callback.php</filename>
-		<filename>helper.php</filename>
+        <folder>src</folder>
 		<folder>tmpl</folder>
-		<folder>assets</folder>
 	</files>
-	<languages folder="language">
-		<language tag="en-GB">en-GB/en-GB.mod_wedal_joomla_callback.ini</language>
-		<language tag="en-GB">en-GB/en-GB.mod_wedal_joomla_callback.sys.ini</language>
-		<language tag="ru-RU">ru-RU/ru-RU.mod_wedal_joomla_callback.ini</language>
-		<language tag="ru-RU">ru-RU/ru-RU.mod_wedal_joomla_callback.sys.ini</language>
+
+	<media destination="mod_wedal_joomla_callback" folder="media">
+        <folder>js</folder>
+        <folder>css</folder>
+	</media>
+
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.mod_wedal_joomla_callback.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.mod_wedal_joomla_callback.sys.ini</language>
+		<language tag="ru-RU">language/ru-RU/ru-RU.mod_wedal_joomla_callback.ini</language>
+		<language tag="ru-RU">language/ru-RU/ru-RU.mod_wedal_joomla_callback.sys.ini</language>
 	</languages>
 
 	<config>
