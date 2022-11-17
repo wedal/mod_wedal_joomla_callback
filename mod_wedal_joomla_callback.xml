@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="module" version="3.10" client="site" method="upgrade">
+<extension type="module" version="4.1" client="site" method="upgrade">
 	<name>Wedal Joomla Callback</name>
 	<author>Wedal</author>
 	<creationDate>2018</creationDate>

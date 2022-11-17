@@ -11,6 +11,6 @@
 		<downloads>
 			<downloadurl type="full" format="zip">https://github.com/wedal/mod_wedal_joomla_callback/archive/master.zip</downloadurl>
 		</downloads>
-		<targetplatform name="joomla" version="3.[10]" />
+		<targetplatform name="joomla" version="4.[123456789]" />
 	</update>
 </updates>
