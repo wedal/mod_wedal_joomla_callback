@@ -5,106 +5,217 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Joomla\Registry\Registry;
 use Joomla\CMS\Language\Text;
+use Joomla\Component\Content\Site\Helper\RouteHelper;
+use Joomla\Registry\Registry;
+use Joomla\CMS\Form\Form;
+
 /**
  * Helper for mod_wedal_joomla_callback
  */
 class WedalJoomlaCallbackHelper
 {
 
-	function __construct(&$params)
-    {
-        //jimport('joomla.application.module.helper');
-        //$module = JModuleHelper::getModuleById($moduleId); //--->> It can be use for Joomla 3.9.0+
-	    //$this->module = WedalJoomlaCallbackHelper::getModuleById($moduleId); // It use for Joomla < 3.9.0 for legacy reason
-
-	    //$this->params = new Registry;
-	   // $this->params->loadString($this->module->params);
-
-	    $this->moduletype = $params->get('moduletype', 0);
-
-		$this->formfields = new \stdClass();
-
-	    $this->formfields->name['show'] = $params->get('showname', '');
-	    $this->formfields->name['req'] = WedalJoomlaCallbackHelper::getRequired($params->get('shownamereq', ''));
-
-	    $this->formfields->email['show'] = $params->get('showemail', '');
-	    $this->formfields->email['req'] = WedalJoomlaCallbackHelper::getRequired($params->get('showemailreq', ''));
-
-	    $this->formfields->phone['show'] = $params->get('showphone', '');
-	    $this->formfields->phone['req'] = WedalJoomlaCallbackHelper::getRequired($params->get('showphonereq', ''));
-
-	    $this->formfields->comment['show'] = $params->get('showtextarea', '');
-	    $this->formfields->comment['req'] = WedalJoomlaCallbackHelper::getRequired($params->get('showtextareareq', ''));
-
-	    $this->formfields->tos['show'] = $params->get('showtos', '');
-	    $this->formfields->tos['toslink'] = $params->get('toslink', '#');
-
-		if ($this->formfields->tos['show'] && $this->formfields->tos['toslink'] != '#') {
-			JLoader::register('ContentHelperRoute', JPATH_SITE . '/components/com_content/helpers/route.php');
- 			JModelLegacy::addIncludePath(JPATH_SITE . '/components/com_content/models', 'ContentModel');
-			$article = JModelLegacy::getInstance('Article', 'ContentModel', array('ignore_request' => true));
-			$article->setState('article.id', $this->formfields->tos['toslink']);
-			$article->setState('filter.published', 1);
-			$article->setState('params', Factory::getApplication()->getParams());
-			$tos_article   = $article->getItem();
-			$this->formfields->tos['toslink'] =  JRoute::_(ContentHelperRoute::getArticleRoute($this->formfields->tos['toslink'], $tos_article->catid, $tos_article->language));
-		}
-
-	    $this->formfields->tos['toslinktext'] = $params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE'));
-	    $this->formfields->tos['toscheckbox'] = $params->get('toscheckbox', '');
-
-		$params->set('moduleid', $module->id);
-		$params->set('formfields', $this->formfields);
-
-    }
-
-	public static function getRequired($param)
-	{
-
-		if($param) {
-			$req = array();
-			$req[0] = '*';
-			$req[1] = 'required';
-			return $req;
-		}
-
-	}
-
-	public function checkRequired()
-	{
-		$checked = true;
-		foreach ($this->formfields as $formfield) {
-			if ($formfield['show'] && $formfield['req'] && !$formfield['value']) {
-				$checked = false;
-			}
-		}
-
-		return $checked;
-	}
-
-	public static function getFormAjax()
+	public function getForm($moduleid)
 	{
 		$jinput = Factory::getApplication()->input;
-		$moduleId = $jinput->get('modid', null, 'int');
-		$itemid = $jinput->get('Itemid', null, 'int');
-		$params = WedalJoomlaCallbackHelper::getParams($moduleId);
+		$this->app = Factory::getApplication();
 
-		$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
-		$formdesc = $params->get('formdesc', '');
-		if ($params->get('showformtitle', '1')) {
-		    $formtitle = $params->get('formtitle', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
+		if (is_array($moduleid)) {
+			$this->moduleid = $jinput->get('modid', null, 'int');
+		} else {
+			$this->moduleid = (int) $moduleid;
 		}
-		$this->formfields = $params->get('formfields', '');
-		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_popupform');
-		return;
+
+		$module = ModuleHelper::getModuleById((string) $this->moduleid); //--->> It can be use for Joomla 3.9.0+
+
+		$this->params = new Registry;
+		$this->params->loadString($module->params);
+
+		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
+
+		$this->moduletype = $this->params->get('moduletype', 0);
+		$this->itemid = $jinput->get('Itemid', null, 'int');
+
+		$this->buttontext = $this->params->get('buttontext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
+		$this->thankyoutext = $this->params->get('thankyoutext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
+
+		$this->moduleclass_sfx = htmlspecialchars($this->params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$this->formdesc = $this->params->get('formdesc', '');
+
+		if ($this->params->get('showformtitle', '1')) {
+			$this->formtitle = $this->params->get('formtitle', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
+		}
+
+		$this->form = Form::getInstance('form'.$this->moduleid, '<form><fieldset name="fields"></fieldset></form>'); //array("control" => "WJCForm_" . $this->moduleid )
+
+		$this->createFields();
+
+		$this->fields = $this->form->getXml();
+		//$this->formdata = $this->form->getData();
 	}
 
-	public static function sendFormAjax()
-	{
+	public function createField($form_params, $fieldset = 'fields'){  //!!!! Динамическая генерация полей через Jform
+		$note = new \SimpleXMLElement('<field />');
 
+		$form_params->class = $form_params->name;
+
+		foreach ($form_params as $key => $value) {
+			$note->addAttribute($key, $value);
+		}
+
+		$this->form->setField($note, null, true, $fieldset);
+	}
+
+	//Создает базовые поля модуля согласно настройкам в нем
+	public function createFields(){
+
+		//Имя
+		if ($this->params->get('showname', ''))
+		{
+			$form_field       = new \stdClass();
+			$form_field->name = 'name';
+			$form_field->type = 'text';
+			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
+			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
+			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');
+			$form_field->filter = 'raw';
+
+			if ($this->params->get('shownamereq', ''))
+			{
+				$form_field->required = true;
+			}
+
+			$this->createField($form_field);
+		}
+
+		//Email
+		if ($this->params->get('showemail', ''))
+		{
+			$form_field       = new \stdClass();
+			$form_field->name = 'email';
+			$form_field->type = 'email';
+			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
+			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
+			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL_ERROR');
+
+			if ($this->params->get('showemailreq', ''))
+			{
+				$form_field->required = true;
+			}
+
+			$this->createField($form_field);
+		}
+
+		//Телефон
+		if ($this->params->get('showphone', ''))
+		{
+			$form_field = new \stdClass();
+			$form_field->name = 'phone';
+			$form_field->type = 'tel';
+			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE');
+			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE');
+			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE_ERROR');
+
+			if ($this->params->get('showphonereq', ''))
+			{
+				$form_field->required = true;
+			}
+
+			$this->createField($form_field);
+		}
+
+		//Комментарий
+		if ($this->params->get('showtextarea', ''))
+		{
+			$form_field = new \stdClass();
+			$form_field->name = 'comment';
+			$form_field->type = 'textarea';
+			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA');
+			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA');
+			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MESSAGE_ERROR');
+
+			if ($this->params->get('showtextareareq', ''))
+			{
+				$form_field->required = true;
+			}
+
+			$this->createField($form_field);
+		}
+
+		//Дополнительные поля
+		$customfields = $this->createCustomFields();
+
+		//Согласие с условиями
+		if ($this->params->get('showtos'))
+		{
+			$form_field = new \stdClass();
+			$form_field->name = 'tos_box';
+
+			if ($this->params->get('toscheckbox')) {
+				$form_field->type = 'checkbox';
+				$form_field->required = true;
+				$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOS_ERROR');
+			} else {
+				$form_field->type = 'note';
+				$form_field->heading = 'div';
+			}
+
+			if ($this->params->get('toslink', '#') != '#')
+			{
+
+				$article = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Articles', 'Site', ['ignore_request' => true]);
+
+				$article->setState('article.id', $this->params->get('toslink'));
+				$article->setState('filter.published', 1);
+				$article->setState('params', Factory::getApplication()->getParams());
+				$article->setState('list.limit', 1);
+
+				$tos_article   = $article->getItems();
+				$article_slug     = $tos_article[0]->id . ':' . $tos_article[0]->alias;
+				$tos_link = Route::_(RouteHelper::getArticleRoute($article_slug, $tos_article[0]->catid, $tos_article[0]->language));
+
+				$form_field->label = Text::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $tos_link, $this->params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE')));
+			}
+
+
+			$this->createField($form_field, $customfields ? 'customfields' : '');
+
+		}
+	}
+
+	//Создает дополнительные поля модуля согласно настройкам на вкладке дополнительных полей
+	public function createCustomFields(){
+		if (!$this->params->get('enable_customfields', '0')) {
+			return false;
+		}
+
+		if (!$this->params->get('customfields', '')) {
+			return false;
+		}
+
+		$custom_xml = '<form><fieldset name="customfields">' .$this->params->get('customfields', ''). '</fieldset></form>';
+		$this->form->load($custom_xml);
+
+		return true;
+	}
+
+	public function getFormAjax()
+	{
+		$moduleId = Factory::getApplication()->input->get('modid', null, 'int');
+
+		$form = new WedalJoomlaCallbackHelper;
+		$form->getForm($moduleId);
+
+		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_popupform');
+		return false;
+	}
+
+	public function sendFormAjax()
+	{
 		//Check token
 		if (!Session::checkToken()) {
 			echo json_encode(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
@@ -112,94 +223,64 @@ class WedalJoomlaCallbackHelper
 		}
 
 		$jinput = Factory::getApplication()->input;
+		$app = Factory::getApplication();
+
 		$moduleId = $jinput->get('modid', null, 'int');
 		$page_url = urldecode($jinput->get('page', null, 'STRING'));
 
-		$params = WedalJoomlaCallbackHelper::getParams($moduleId);
+		$form = new WedalJoomlaCallbackHelper;
+		$form->getForm($moduleId);
 
-		$this->formfields = $params->get('formfields', '');
+		$data = $jinput->post->getArray();
+		$form->values  = $form->form->filter($data);
 
-		//Check required fields
-		foreach ($this->formfields as $key => &$formfield) {
-			if ($formfield['show']) {
-				$formfield['value'] = $jinput->get('WJCForm'.$moduleId.'_'.$key, '', 'STRING');
-			}
-		}
+		$result = $form->form->validate($form->values);
 
-		$checked = $this->checkRequired();
-
-		if ($checked) {
-			$config = Factory::getConfig();
-
-			$mailtitle = $params->get('mailtitle', '');
-			if (!$mailtitle) {
-				$mailtitle = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
-			}
-
-			$email =  $params->get('email', '');
-			if (!$email) {
-				$email = $config->get('mailfrom');
-			}
-
-			$email =  $params->get('email', '');
-			if (!$email) {
-				$email = $config->get('mailfrom');
-			}
-
-			$thankyoutext = $params->get('thankyoutext', '');
-			if (!$thankyoutext) {
-				$thankyoutext = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT');
-			}
-
-
-			ob_start();
-			htmlspecialchars(require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $params->get('layout', 'default') . '_message'), ENT_QUOTES);
-			$body = ob_get_contents();
-			ob_end_clean();
-
-			$to = $email;
-			$from = array($config->get('mailfrom') , $config->get('fromname') );
-			$subject = $mailtitle;
-
-			$mailer = Factory::getMailer();
-			$mailer->setSender($from);
-
-			if ($this->formfields->email['value']) {
-				$mailer->addReplyTo($this->formfields->email['value']);
-			}
-
-			$mailer->addRecipient($to);
-			$mailer->setSubject($subject);
-			$mailer->setBody($body);
-			$mailer->isHTML();
-			$mailer->send();
-
-			echo json_encode(Array('message' => $thankyoutext, 'error' => 0));
-
-		} else {
-			echo json_encode(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
-		}
-
-	    return;
-	}
-
-	/**
-	 * Get module by id
-	 //----------> Use it for Joomla < 3.9.0
-	 */
-	public static function &getModuleById($id)
-	{
-		jimport('joomla.application.module.helper');
-		$modules = ModuleHelper::getModuleList();
-
-		foreach ($modules as $module)
+		if (!$result)
 		{
-			if ($module->id == $id)
-			{
-				return $module;
-			}
+			$errors = $form->getErrors();
+			return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . $errors , 'error' => 0));
 		}
 
-		return false;
+		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
+
+		$mailtitle = $form->params->get('mailtitle', '');
+		if (!$mailtitle) {
+			$mailtitle = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
+		}
+
+		$email =  $form->params->get('email', '');
+		if (!$email) {
+			$email = $app->get('mailfrom');
+		}
+
+		$thankyoutext = $form->params->get('thankyoutext', '');
+		if (!$thankyoutext) {
+			$thankyoutext = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT');
+		}
+
+		ob_start();
+		htmlspecialchars(require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message'), ENT_QUOTES);
+		$body = ob_get_contents();
+		ob_end_clean();
+
+		$to = $email;
+		$from = array($app->get('mailfrom') , $app->get('fromname') );
+		$subject = $mailtitle;
+
+		$mailer = Factory::getMailer();
+		$mailer->setSender($from);
+
+		if ($form->data['email']) {
+			$mailer->addReplyTo($form->values['email']);
+		}
+
+		$mailer->addRecipient($to);
+		$mailer->setSubject($subject);
+		$mailer->setBody($body);
+		$mailer->isHTML();
+		$mailer->send();
+
+		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
 	}
 }

@@ -1,88 +1,74 @@
-<?php defined('_JEXEC') or die('Restricted access'); ?>
+<?php
+/*
+Информация о том, как работать с полями в макете:
+- https://api.joomla.org/cms-3/classes/Joomla.CMS.Form.Form.html
+- https://docs.joomla.org/Basic_form_guide
+- https://docs.joomla.org/Advanced_form_guide
 
-<div id="WJCForm<?php echo $module->id ?>" class="wjcallbackform <?php echo $moduleclass_sfx ?>" role="dialog" data-id="<?php echo $module->id ?>" data-itemid="<?php echo $itemid ?>">
+Макеты разметки полей находятся в каталоге:
+/layouts/joomla/form
+и могут быть переопределены в ваш шаблон
+
+*/
+
+defined('_JEXEC') or die('Restricted access');
+
+use Joomla\CMS\Language\Text;
+
+?>
+
+<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->moduleclass_sfx ?>" role="dialog" data-id="<?php echo $form->moduleid ?>" data-itemid="<?php echo $form->itemid ?>">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-        	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
+        	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate">
 
         		<div class="modal-header">
-        			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <?php if (!empty($formtitle)) { ?>
+                    <?php if (!empty($form->formtitle)) { ?>
                         <div class="form-header">
-                            <h2 class="modal-title"><?php echo $formtitle ?></h2>
+                            <h2 class="modal-title"><?php echo $form->formtitle ?></h2>
                         </div>
                     <?php } ?>
+                    <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">&times;</button>
         		</div>
 
         		<div class="modal-body">
 
-                    <?php if (!empty($formdesc)) { ?>
+                    <?php if (!empty($form->formdesc)) { ?>
             			<div class="informtext one-click-desc">
-            				<?php echo $formdesc; ?>
+            				<?php echo $form->formdesc; ?>
             			</div>
                     <?php } ?>
 
-                    <?php if (!empty($form->formfields->name['show'])) { ?>
-            			<div class="inputcont">
-            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME'); ?> <?php echo $form->formfields->name['req'][0] ?>" value="" class="inputbox <?php echo $form->formfields->name['req'][1] ?> form-control" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');  ?>" id="WJCForm<?php echo $module->id ?>_name" name="WJCForm<?php echo $module->id ?>_name" />
-            			</div>
-                    <?php } ?>
+			        <?php //Базовые поля и их переопределения ?>
+			        <?php foreach ($form->form->getFieldset('fields') as $field) { ?>
+				        <?php echo $field->renderField(array('class' => $field->id)); ?>
+			        <?php } ?>
 
-                    <?php if (!empty($form->formfields->phone['show'])) { ?>
-            			<div class="inputcont">
-            				<input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE'); ?> <?php echo $form->formfields->phone['req'][0] ?>" value="" class="inputbox <?php echo $form->formfields->phone['req'][1] ?> form-control" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE_ERROR');  ?>" id="WJCForm<?php echo $module->id ?>_phone" name="WJCForm<?php echo $module->id ?>_phone" />
-            			</div>
-                    <?php } ?>
-
-                    <?php if (!empty($form->formfields->email['show'])) { ?>
-                        <div class="inputcont">
-                            <input type="text" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL'); ?> <?php echo $form->formfields->email['req'][0] ?>" value="" class="inputbox <?php echo $form->formfields->email['req'][1] ?> form-control" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL_ERROR');  ?>" id="WJCForm<?php echo $module->id ?>_email" name="WJCForm<?php echo $module->id ?>_email" />
-                        </div>
-                    <?php } ?>
-
-                    <?php if (!empty($form->formfields->comment['show'])) { ?>
-                        <div class="inputcont">
-                            <textarea id="WJCForm<?php echo $module->id ?>_comment"  rows="4" cols="10" placeholder="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA'); ?> <?php echo $form->formfields->comment['req'][0] ?>" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_MESSAGE_ERROR');  ?>" name="WJCForm<?php echo $module->id ?>_comment" class="customer-comment <?php echo $form->formfields->comment['req'][1] ?>"></textarea>
-                        </div>
-                    <?php } ?>
-
-                    <?php if (!empty($form->formfields->tos['show'])) { ?>
-                        <div class="inputcont">
-                            <label id="WJCForm<?php echo $module->id ?>_tos" class="tos">
-                                <?php if (!empty($form->formfields->tos['toscheckbox'])) { ?>
-                                    <input id="WJCForm<?php echo $module->id ?>_tos_box" type="checkbox" class="tos-box required" name="tos_box" value="1" data-error="<?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_TOS_ERROR');  ?>">
-                                <?php } ?>
-                                <span><?php echo JText::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $form->formfields->tos['toslink'], $form->formfields->tos['toslinktext']); ?></span>
-                                <?php if (!empty($form->formfields->tos['toscheckbox'])) { ?>
-                                    <span>*</span>
-                                <?php } ?>
-                            </label>
-                        </div>
-                    <?php } ?>
+			        <?php //Дополнительные поля ?>
+			        <?php foreach ($form->form->getFieldset('customfields') as $field) { ?>
+				        <?php echo $field->renderField(array('class' => $field->id)); ?>
+			        <?php } ?>
 
         		</div>
 
         		<div class="modal-footer">
                     <?php echo JHtml::_( 'form.token' ); ?>
-        			<button class="btn" type="submit"><?php echo JText::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
+        			<button class="btn btn-primary" type="submit"><?php echo Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
         		</div>
         	</form>
         </div>
     </div>
 </div>
 
-<?php if (!empty($params->get('showphonemask'))) {
+<?php if (!empty($form->params->get('showphonemask'))) {
     echo '
-    <script src="/modules/mod_wedal_joomla_callback/media/js/jquery.maskedinput.min.js" charset="utf-8"></script>
     <script type="text/javascript">
         jQuery(document).ready(function($) {
-           $("#WJCForm'.$module->id.'_phone").mask("'.$params->get('phonemasktype', JText::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'");
+           var mask = Maska.create("#WJCForm'.$form->moduleid.' #phone", {
+              mask: "'.$form->params->get('phonemasktype', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'"
+           });
         });
     </script>
     ';
     }
-/**
- * Copyright (С) Wedal web workshop <https://wedal.ru
- */
-
 ?>

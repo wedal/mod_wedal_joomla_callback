@@ -98,14 +98,19 @@
                 var loader = $('#wjcallback-loader');
                 $.ajax({
                     type: 'POST',
-                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
+                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
                     data: $(this).serialize(),
                     dataType: 'json',
                     success: function(data) {
-                        //console.log(data);
-                        loader.remove();
-                        $('#WJCForm'+module_id+' .modal-footer').hide();
-                        $('#WJCForm'+module_id+' .modal-body').html(data['message']);
+                        console.log(data);
+
+                        if (!data.data.data.error) {
+                            loader.remove();
+                            $('#WJCForm' + module_id + ' .modal-footer').hide();
+                            $('#WJCForm' + module_id + ' .modal-body').html(data.data.data.message);
+                        } else {
+                            alert(data.data.data.message);
+                        }
                     }
                 });
             }

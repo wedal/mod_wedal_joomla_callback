@@ -11,8 +11,8 @@
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
-		<filename module="mod_wedal_joomla_callback">mod_wedal_joomla_callback.php</filename>
-        <folder>src</folder>
+		<folder module="mod_wedal_joomla_callback">src</folder>
+		<folder>services</folder>
 		<folder>tmpl</folder>
 	</files>
 
@@ -22,15 +22,15 @@
 	</media>
 
 	<languages>
-		<language tag="en-GB">language/en-GB/en-GB.mod_wedal_joomla_callback.ini</language>
-		<language tag="en-GB">language/en-GB/en-GB.mod_wedal_joomla_callback.sys.ini</language>
-		<language tag="ru-RU">language/ru-RU/ru-RU.mod_wedal_joomla_callback.ini</language>
-		<language tag="ru-RU">language/ru-RU/ru-RU.mod_wedal_joomla_callback.sys.ini</language>
+		<language tag="en-GB">language/en-GB/mod_wedal_joomla_callback.ini</language>
+		<language tag="en-GB">language/en-GB/mod_wedal_joomla_callback.sys.ini</language>
+		<language tag="ru-RU">language/ru-RU/mod_wedal_joomla_callback.ini</language>
+		<language tag="ru-RU">language/ru-RU/mod_wedal_joomla_callback.sys.ini</language>
 	</languages>
 
 	<config>
 	<fields name="params">
-		<fieldset name="basic" addfieldpath="/administrator/components/com_content/models/fields">
+		<fieldset name="basic" addfieldprefix="Joomla\Component\Content\Administrator\Field">
 
 			<field name="moduletype" type="list" default="0" label="MOD_WEDAL_JOOMLA_CALLBACK_TYPE" description="MOD_WEDAL_JOOMLA_CALLBACK_TYPE_DESC">
 			  <option value="0">MOD_WEDAL_JOOMLA_CALLBACK_TYPE_MODAL</option>
@@ -139,12 +139,26 @@
 
 		</fieldset>
 
+		<fieldset name="customfields">
+
+			<field name="customfields_note" type="note" class="alert alert-info" description="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_NOTE" />
+
+			<field type="radio" name="enable_customfields"  description="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_ENABLE_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_ENABLE" default="1" class="btn-group btn-group-yesno">
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+
+			<field	name="customfields"	type="editor" label="COM_MODULES_CUSTOMFIELDS_FIELDSET_LABEL" description="COM_MODULES_CUSTOMFIELDS_FIELDSET_LABEL_DESC"	filter="raw" hint="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_PLACEHOLDER"	editor="codemirror"	showon="enable_customfields:1" />
+
+		</fieldset>
+
 		<fieldset name="advanced">
 			<field
 				name="layout"
 				type="modulelayout"
 				label="JFIELD_ALT_LAYOUT_LABEL"
 				description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+				class="form-select"
 			/>
 
 			<field
@@ -173,14 +187,6 @@
 				description="COM_MODULES_FIELD_CACHE_TIME_DESC"
 				default="900"
 			/>
-
-			<field
-				name="cachemode"
-				type="hidden"
-				default="static"
-				>
-				<option value="static"></option>
-			</field>
 		</fieldset>
 
 	</fields>
