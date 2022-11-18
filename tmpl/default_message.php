@@ -3,8 +3,7 @@
 defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Language\Text;
-
- ?>
+?>
 
 <div class="message">
 	<?php foreach ($form->values as $key => $value) { ?>

@@ -1,5 +1,4 @@
 <?php
-
 defined('_JEXEC') || die();
 
 use Joomla\CMS\Extension\Service\Provider\HelperFactory;

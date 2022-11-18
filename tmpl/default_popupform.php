@@ -8,13 +8,11 @@
 Макеты разметки полей находятся в каталоге:
 /layouts/joomla/form
 и могут быть переопределены в ваш шаблон
-
 */
 
 defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\Language\Text;
-
 ?>
 
 <div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->moduleclass_sfx ?>" role="dialog" data-id="<?php echo $form->moduleid ?>" data-itemid="<?php echo $form->itemid ?>">

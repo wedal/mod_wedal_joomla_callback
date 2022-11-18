@@ -5,6 +5,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
@@ -55,7 +56,6 @@ class WedalJoomlaCallbackHelper
 		$this->createFields();
 
 		$this->fields = $this->form->getXml();
-		//$this->formdata = $this->form->getData();
 	}
 
 	public function createField($form_params, $fieldset = 'fields'){  //!!!! Динамическая генерация полей через Jform
@@ -271,11 +271,22 @@ class WedalJoomlaCallbackHelper
 		$mailer = Factory::getMailer();
 		$mailer->setSender($from);
 
-		if ($form->data['email']) {
+		if ($form->values['email']) {
 			$mailer->addReplyTo($form->values['email']);
 		}
 
 		$mailer->addRecipient($to);
+
+		if ($form->params->get('email_additional', '')) {
+			$additional_recipients = preg_split('/\r\n|[\r\n]/', $form->params->get('email_additional', ''));
+
+			foreach ($additional_recipients as $additional_recipient) {
+				if (MailHelper::isEmailAddress($additional_recipient)) {
+					$mailer->addRecipient($additional_recipient);
+				}
+			}
+		}
+
 		$mailer->setSubject($subject);
 		$mailer->setBody($body);
 		$mailer->isHTML();

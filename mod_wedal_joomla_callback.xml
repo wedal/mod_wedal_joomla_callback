@@ -49,6 +49,15 @@
 				validate="email"
 			/>
 
+			<field
+				name="email_additional"
+				type="textarea"
+				label="MOD_WEDAL_JOOMLA_CALLBACK_RECIPIENT_ADDITIONAL"
+				description="MOD_WEDAL_JOOMLA_CALLBACK_RECIPIENT_ADDITIONAL_DESC"
+				size="30"
+				class="inputbox"
+			/>
+
 			<field name="mailtitle" type="text" default="" hint="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT" label="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE" description="MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DESC"  />
 
 			<field type="radio" name="showformtitle" description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWFORMTITLE_DESC" label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWFORMTITLE" default="1" class="btn-group btn-group-yesno">
