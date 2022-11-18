@@ -46,43 +46,6 @@
         }, 500);
     };
 
-    function wjcform_validate(module_id) {
-
-        var wjcmodal = $('#WJCForm'+module_id);
-        var wjcmodal_id = 'WJCForm'+module_id;
-
-        window.reEmail = /^([a-z0-9\.\-\_])+\@(([a-zA-Z0-9\-\_])+\.)+([a-zA-Z0-9]{2,6})+$/i;
-        if (!wjcmodal.find('#' + wjcmodal_id + '_name').val() && wjcmodal.find('#' + wjcmodal_id + '_name').hasClass('required')) {
-            wjcmodal.find('#' + wjcmodal_id + '_name').focus();
-            alert(wjcmodal.find('#' + wjcmodal_id + '_name').attr('data-error'));
-            return false;
-        } else if (!wjcmodal.find('#' + wjcmodal_id + '_phone').val() && wjcmodal.find('#' + wjcmodal_id + '_phone').hasClass('required')) {
-            wjcmodal.find('#' + wjcmodal_id + '_phone').focus();
-            alert(wjcmodal.find('#' + wjcmodal_id + '_phone').attr('data-error'));
-            return false;
-
-        } else if ((!reEmail.test(wjcmodal.find('#' + wjcmodal_id + '_email').val()) || !wjcmodal.find('#' + wjcmodal_id + '_email').val()) && wjcmodal.find('#' + wjcmodal_id + '_email').hasClass('required')) {
-            wjcmodal.find('#' + wjcmodal_id + '_email').focus();
-            alert(wjcmodal.find('#' + wjcmodal_id + '_email').attr('data-error'));
-            return false;
-
-        } else if (!wjcmodal.find('#' + wjcmodal_id + '_comment').val() && wjcmodal.find('#' + wjcmodal_id + '_comment').hasClass('required')) {
-            wjcmodal.find('#' + wjcmodal_id + '_comment').focus();
-            alert(wjcmodal.find('#' + wjcmodal_id + '_comment').attr('data-error'));
-            return false;
-
-        } else if (wjcmodal.find('#' + wjcmodal_id + '_tos_box').length > 0 && wjcmodal.find('#' + wjcmodal_id + '_tos_box').hasClass('required') && wjcmodal.find('#' + wjcmodal_id + '_tos_box').attr("checked") != 'checked') {
-            wjcmodal.find('#' + wjcmodal_id + '_tos_box').focus();
-            alert(wjcmodal.find('#' + wjcmodal_id + '_tos_box').attr('data-error'));
-            return false;
-
-        }
-
-         else {
-            return true;
-        }
-    };
-
     function wjcform_submit(wjcmodal) {
         wjcmodal.on('submit', 'form', function(event) {
             event.preventDefault();
@@ -93,27 +56,25 @@
                 itemid = '&Itemid=' + itemid;
             }
 
-            if (wjcform_validate(module_id)) {
-                $('body').append('<div id="wjcallback-loader"></div>');
-                var loader = $('#wjcallback-loader');
-                $.ajax({
-                    type: 'POST',
-                    url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
-                    data: $(this).serialize(),
-                    dataType: 'json',
-                    success: function(data) {
-                        console.log(data);
+            $('body').append('<div id="wjcallback-loader"></div>');
+            var loader = $('#wjcallback-loader');
+            $.ajax({
+                type: 'POST',
+                url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(data) {
+                    console.log(data);
 
-                        if (!data.data.data.error) {
-                            loader.remove();
-                            $('#WJCForm' + module_id + ' .modal-footer').hide();
-                            $('#WJCForm' + module_id + ' .modal-body').html(data.data.data.message);
-                        } else {
-                            alert(data.data.data.message);
-                        }
+                    if (!data.data.data.error) {
+                        loader.remove();
+                        $('#WJCForm' + module_id + ' .modal-footer').hide();
+                        $('#WJCForm' + module_id + ' .modal-body').html(data.data.data.message);
+                    } else {
+                        alert(data.data.data.message);
                     }
-                });
-            }
+                }
+            });
         });
         return true;
     };
