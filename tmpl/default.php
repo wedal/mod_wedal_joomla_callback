@@ -12,6 +12,6 @@ if ($params->get('showphonemask')) {
 }
 ?>
 
-<div id="WJC<?php echo $module->id ?>" data-id="<?php echo $module->id ?>" data-itemid="<?php echo $form->itemid ?>" class="wjcallback <?php echo $form->moduleclass_sfx ?>">
+<div id="WJC<?php echo $module->id ?>" data-id="<?php echo $module->id ?>" class="wjcallback <?php echo $form->moduleclass_sfx ?>">
     <a class="wjcallback-link" href="#"><?php echo $form->buttontext ?></a>
 </div>

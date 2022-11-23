@@ -19,11 +19,20 @@ use Joomla\CMS\Form\Form;
  */
 class WedalJoomlaCallbackHelper
 {
+	public function __construct()
+	{
+		$this->app = Factory::getApplication();
+
+		//Параметры для JS
+		$js_params['itemid'] = $this->app->input->get('Itemid', null, 'int');
+
+		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
+	}
 
 	public function getForm($moduleid)
 	{
 		$jinput = Factory::getApplication()->input;
-		$this->app = Factory::getApplication();
+
 
 		if (is_array($moduleid)) {
 			$this->moduleid = $jinput->get('modid', null, 'int');

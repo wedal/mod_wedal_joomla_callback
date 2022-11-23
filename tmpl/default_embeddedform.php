@@ -16,7 +16,7 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Language\Text;
 ?>
 
-<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform embeddedform <?php echo $form->moduleclass_sfx ?>" data-id="<?php echo $form->moduleid ?>" data-itemid="<?php echo $form->itemid ?>">
+<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform embeddedform <?php echo $form->moduleclass_sfx ?>" data-id="<?php echo $form->moduleid ?>">
     <div class="wjcallbackform-wrapper message-container">
     	<form method="post" action="<?php JURI::current(); ?>" class="form-validate">
 

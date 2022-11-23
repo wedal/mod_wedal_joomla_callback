@@ -1,5 +1,7 @@
 (function($) {
     $(document).ready(function() {
+        let module_options = Joomla.getOptions('wedal_joomla_callback');
+
         $('body').on('click', '.wjcallback .wjcallback-link', function(event) {
             event.preventDefault();
             $('body').append('<div id="wjcallback-modal"></div><div id="wjcallback-loader"></div>');
@@ -7,9 +9,10 @@
 			let loader = $('#wjcallback-loader');
             let wjcmodal = $('#wjcallback-modal');
 			let module_id = $(this).closest(".wjcallback").attr('data-id');
-            let itemid = $(this).closest(".wjcallback").attr('data-itemid');
-            if (itemid) {
-                itemid = '&Itemid=' + itemid;
+            let itemid = '';
+
+            if (module_options['itemid']) {
+                itemid = '&Itemid=' + module_options['itemid'];
             }
             wjcmodal.load('/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid='+module_id+itemid, function() {
 				loader.remove();
@@ -21,7 +24,6 @@
                     wjcmodal_remove(wjcmodal);
                 });
 
-                wjcmodal.itemid = itemid;
                 wjcform_submit(wjcmodal);
             }); // End Load
         });
@@ -60,16 +62,11 @@
             event.preventDefault();
             let module_id = $(this).closest(".wjcallbackform").attr('data-id');
 
-            var itemid = $(this).closest(".wjcallbackform").attr('data-itemid');
-            if (itemid) {
-                itemid = '&Itemid=' + itemid;
-            }
-
             $('body').append('<div id="wjcallback-loader"></div>');
             let loader = $('#wjcallback-loader');
             $.ajax({
                 type: 'POST',
-                url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
+                url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+'&page='+encodeURIComponent(window.location.href),
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function(data) {
