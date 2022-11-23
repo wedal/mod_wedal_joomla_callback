@@ -1,13 +1,13 @@
 (function($) {
     $(document).ready(function() {
-        $('.wjcallback').on('click', '.wjcallback-link', function(event) {
+        $('body').on('click', '.wjcallback .wjcallback-link', function(event) {
             event.preventDefault();
-            $('body').append('<div id="wjcallback-modal"></div>');
-			$('body').append('<div id="wjcallback-loader"></div>');
-			var loader = $('#wjcallback-loader');
-            var wjcmodal = $('#wjcallback-modal');
-			var module_id = $(this).closest(".wjcallback").attr('data-id');
-            var itemid = $(this).closest(".wjcallback").attr('data-itemid');
+            $('body').append('<div id="wjcallback-modal"></div><div id="wjcallback-loader"></div>');
+
+			let loader = $('#wjcallback-loader');
+            let wjcmodal = $('#wjcallback-modal');
+			let module_id = $(this).closest(".wjcallback").attr('data-id');
+            let itemid = $(this).closest(".wjcallback").attr('data-itemid');
             if (itemid) {
                 itemid = '&Itemid=' + itemid;
             }
@@ -17,7 +17,7 @@
                 $('body').addClass('wjcallback-body-scrolloff');
                 wjcmodal.addClass('show');
 
-                wjcmodal.on('click', '.close', function(event) {
+                wjcmodal.on('click', '.close', function() {
                     wjcmodal_remove(wjcmodal);
                 });
 
@@ -26,7 +26,7 @@
             }); // End Load
         });
 
-        $('.wjcallbackform.embeddedform').each(function(index, el) {
+        $('.wjcallbackform.embeddedform').each(function() {
             wjcform_submit($(this));
         });
 
@@ -53,28 +53,26 @@
             wjcmodal.remove();
             $('body').removeClass('wjcallback-body-scrolloff');
         }, 500);
-    };
+    }
 
     function wjcform_submit(wjcmodal) {
         wjcmodal.on('submit', 'form', function(event) {
             event.preventDefault();
-            var module_id = $(this).closest(".wjcallbackform").attr('data-id');
-            var wjcmodal = $('#WJCForm'+module_id);
+            let module_id = $(this).closest(".wjcallbackform").attr('data-id');
+
             var itemid = $(this).closest(".wjcallbackform").attr('data-itemid');
             if (itemid) {
                 itemid = '&Itemid=' + itemid;
             }
 
             $('body').append('<div id="wjcallback-loader"></div>');
-            var loader = $('#wjcallback-loader');
+            let loader = $('#wjcallback-loader');
             $.ajax({
                 type: 'POST',
                 url: '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid='+module_id+itemid+'&page='+encodeURIComponent(window.location.href),
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function(data) {
-                    console.log(data);
-
                     if (!data.data.data.error) {
                         loader.remove();
                         $('#WJCForm' + module_id + ' .modal-footer').hide();
@@ -86,6 +84,6 @@
             });
         });
         return true;
-    };
+    }
 
 })(jQuery);
