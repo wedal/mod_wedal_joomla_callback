@@ -31,16 +31,13 @@ class WedalJoomlaCallbackHelper
 
 	public function getForm($moduleid)
 	{
-		$jinput = Factory::getApplication()->input;
-
-
 		if (is_array($moduleid)) {
-			$this->moduleid = $jinput->get('modid', null, 'int');
+			$this->moduleid = $this->app->input->get('modid', null, 'int');
 		} else {
 			$this->moduleid = (int) $moduleid;
 		}
 
-		$module = ModuleHelper::getModuleById((string) $this->moduleid); //--->> It can be use for Joomla 3.9.0+
+		$module = ModuleHelper::getModuleById((string) $this->moduleid);
 
 		$this->params = new Registry;
 		$this->params->loadString($module->params);
@@ -48,7 +45,7 @@ class WedalJoomlaCallbackHelper
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
 
 		$this->moduletype = $this->params->get('moduletype', 0);
-		$this->itemid = $jinput->get('Itemid', null, 'int');
+		$this->itemid = $this->app->input->get('Itemid', null, 'int');
 
 		$this->buttontext = $this->params->get('buttontext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
 		$this->thankyoutext = $this->params->get('thankyoutext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
@@ -231,16 +228,15 @@ class WedalJoomlaCallbackHelper
 			return;
 		}
 
-		$jinput = Factory::getApplication()->input;
 		$app = Factory::getApplication();
 
-		$moduleId = $jinput->get('modid', null, 'int');
-		$page_url = urldecode($jinput->get('page', null, 'STRING'));
+		$moduleId = $this->app->input->get('modid', null, 'int');
+		$page_url = urldecode($this->app->input->get('page', null, 'STRING'));
 
 		$form = new WedalJoomlaCallbackHelper;
 		$form->getForm($moduleId);
 
-		$data = $jinput->post->getArray();
+		$data = $this->app->input->post->getArray();
 		$form->values  = $form->form->filter($data);
 
 		$result = $form->form->validate($form->values);
