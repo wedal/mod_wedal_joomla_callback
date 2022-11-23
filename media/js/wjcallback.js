@@ -2,13 +2,13 @@
     $(document).ready(function() {
         let module_options = Joomla.getOptions('wedal_joomla_callback');
 
-        $('body').on('click', '.wjcallback .wjcallback-link', function(event) {
+        $('body').on('click', '.wjcallback-link', function(event) {
             event.preventDefault();
             $('body').append('<div id="wjcallback-modal"></div><div id="wjcallback-loader"></div>');
 
 			let loader = $('#wjcallback-loader');
             let wjcmodal = $('#wjcallback-modal');
-			let module_id = $(this).closest(".wjcallback").attr('data-id');
+			let module_id = $(this).attr('data-id');
             let itemid = '';
 
             if (module_options['itemid']) {
