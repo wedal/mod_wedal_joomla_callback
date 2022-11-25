@@ -15,10 +15,10 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Language\Text;
 ?>
 
-<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->moduleclass_sfx ?>" role="dialog" data-id="<?php echo $form->moduleid ?>">
+<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->params->get('wrapper_suffix') ?>" role="dialog" data-id="<?php echo $form->moduleid ?>">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-        	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate">
+        	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate <?php echo $form->params->get('form_suffix') ?>">
 
         		<div class="modal-header">
                     <?php if (!empty($form->formtitle)) { ?>
@@ -39,19 +39,19 @@ use Joomla\CMS\Language\Text;
 
 			        <?php //Базовые поля и их переопределения ?>
 			        <?php foreach ($form->form->getFieldset('fields') as $field) { ?>
-				        <?php echo $field->renderField(array('class' => $field->id)); ?>
+				        <?php echo $field->renderField(array('class' => $field->id . ' ' . $form->params->get('fieldwrapper_suffix'))); ?>
 			        <?php } ?>
 
 			        <?php //Дополнительные поля ?>
 			        <?php foreach ($form->form->getFieldset('customfields') as $field) { ?>
-				        <?php echo $field->renderField(array('class' => $field->id)); ?>
+				        <?php echo $field->renderField(array('class' => $field->id . ' ' . $form->params->get('fieldwrapper_suffix'))); ?>
 			        <?php } ?>
 
         		</div>
 
         		<div class="modal-footer">
                     <?php echo JHtml::_( 'form.token' ); ?>
-        			<button class="btn btn-primary" type="submit"><?php echo Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
+        			<button class="btn <?php echo $form->params->get('submit_suffix') ?>" type="submit"><?php echo Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
         		</div>
         	</form>
         </div>

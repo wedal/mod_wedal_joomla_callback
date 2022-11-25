@@ -161,6 +161,20 @@
 
 		</fieldset>
 
+		<fieldset name="decor">
+			<field name="customfields_note" type="note" class="alert alert-info" description="MOD_WEDAL_JOOMLA_CALLBACK_DECOR_NOTE" />
+
+			<field name="button_suffix" type="text" default="" hint="" label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONSUFFIX" description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONSUFFIX_DESC"  />
+
+			<field name="submit_suffix" type="text" default="" hint="" label="MOD_WEDAL_JOOMLA_CALLBACK_SUBMITSUFFIX" description="MOD_WEDAL_JOOMLA_CALLBACK_SUBMITSUFFIX_DESC"  />
+
+			<field name="form_suffix" type="text" default="" hint="" label="MOD_WEDAL_JOOMLA_CALLBACK_FORMSUFFIX" description="MOD_WEDAL_JOOMLA_CALLBACK_FORMSUFFIX_DESC"  />
+
+			<field name="fieldwrapper_suffix" type="text" default="" hint="" label="MOD_WEDAL_JOOMLA_CALLBACK_FIELDWRAPPERSUFFIX" description="MOD_WEDAL_JOOMLA_CALLBACK_FIELDWRAPPERSUFFIX_DESC"  />
+
+			<field name="wrapper_suffix" type="text" default="" hint="" label="MOD_WEDAL_JOOMLA_CALLBACK_WRAPPERSUFFIX" description="MOD_WEDAL_JOOMLA_CALLBACK_WRAPPERSUFFIX_DESC"  />
+		</fieldset>
+
 		<fieldset name="advanced">
 			<field
 				name="layout"
