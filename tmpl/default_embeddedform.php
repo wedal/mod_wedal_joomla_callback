@@ -22,7 +22,7 @@ use Joomla\CMS\Language\Text;
 
             <?php if (!empty($form->formtitle)) { ?>
                 <div class="modal-header">
-                    <h2 class="form-title"><?php echo $form->formtitle ?></h2>
+                    <span class="modal-title"><?php echo $form->formtitle ?></span>
                 </div>
             <?php } ?>
 

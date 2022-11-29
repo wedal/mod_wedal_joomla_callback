@@ -23,10 +23,10 @@ use Joomla\CMS\Language\Text;
         		<div class="modal-header">
                     <?php if (!empty($form->formtitle)) { ?>
                         <div class="form-header">
-                            <h2 class="modal-title"><?php echo $form->formtitle ?></h2>
+                            <span class="modal-title"><?php echo $form->formtitle ?></span>
                         </div>
                     <?php } ?>
-                    <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    <div class="close">×</div>
         		</div>
 
         		<div class="modal-body">
