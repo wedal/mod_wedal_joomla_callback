@@ -3,7 +3,6 @@
 use Joomla\CMS\Factory;
 
 $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
-$wa->useScript('jquery');
 $wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
 $wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
 

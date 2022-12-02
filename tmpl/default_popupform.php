@@ -61,11 +61,9 @@ use Joomla\CMS\Language\Text;
 <?php if (!empty($form->params->get('showphonemask'))) {
     echo '
     <script type="text/javascript">
-        jQuery(document).ready(function($) {
-           var mask = Maska.create("#WJCForm'.$form->moduleid.' #phone", {
-              mask: "'.$form->params->get('phonemasktype', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'"
-           });
-        });
+       Maska.create("#WJCForm'.$form->moduleid.' #phone", {
+          mask: "'.$form->params->get('phonemasktype', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")).'"
+       });
     </script>
     ';
     }
