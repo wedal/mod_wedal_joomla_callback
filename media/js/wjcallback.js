@@ -41,7 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 wjcmodal.querySelector('.modal-header .close').addEventListener('click', (event) => {
                    wjcmodal_remove(wjcmodal);
                 });
-        });
+
+                document.dispatchEvent(new CustomEvent('wjcOnFormPopupAfterLoad', {detail: wjcmodal}));
+
+            });
     });
 
     document.addEventListener('submit', (event) => {
@@ -59,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid=' + module_id + '&page=' + encodeURIComponent(window.location.href);
         let formdata = new FormData(event.target.closest('form'));
 
+        if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeSubmit', {detail: event.target, cancelable: true}))) {
+            return;
+        }
+
         fetch(url, {
             method: 'POST',
             body: formdata
@@ -69,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let responce_obj = JSON.parse(response);
 
             if (!responce_obj.data.data.error) {
+                document.dispatchEvent(new CustomEvent('wjcOnFormAfterSubmit', {detail: event.target}));
+
                 event.target.closest('form').querySelector('.modal-footer').style.display = 'none';
                 event.target.closest('form').querySelector('.modal-body').innerHTML = responce_obj.data.data.message;
             } else {
@@ -91,6 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function wjcmodal_remove(wjcmodal) {
+
+    if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeClose', {detail: wjcmodal, cancelable: true}))) {
+        return;
+    }
+
     wjcmodal.classList.remove('show');
 
     setTimeout(function () {
