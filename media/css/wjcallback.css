@@ -21,6 +21,7 @@
 #wjcallback-modal.show {
     display: block;
     background-color:rgba(0, 0, 0, 0.5);
+    overscroll-behavior: contain;
 }
 
 #wjcallback-modal .wjcallbackform {
@@ -42,7 +43,6 @@
 
 .wjcallback-body-scrolloff {
     overflow: hidden;
-    padding-right: 17px;
 }
 
 #wjcallback-modal.show .wjcallbackform {

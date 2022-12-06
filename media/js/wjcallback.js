@@ -33,7 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 wjcmodal.innerHTML = response;
                 loader.remove();
 
-                document.body.classList.add('wjcallback-body-scrolloff');
+                //document.body.classList.add('wjcallback-body-scrolloff');
+                body_scrolloff('add');
+
                 wjcmodal.classList.add('show');
 
                 executeScriptElements(wjcmodal);
@@ -109,8 +111,24 @@ function wjcmodal_remove(wjcmodal) {
 
     setTimeout(function () {
         wjcmodal.remove();
-        document.body.classList.remove('wjcallback-body-scrolloff');
+        //document.body.classList.remove('wjcallback-body-scrolloff');
+        body_scrolloff('remove');
     }, 500);
+}
+
+function body_scrolloff(event) {
+
+    const scrollbarWidth = parseInt(window.innerWidth) - parseInt(document.documentElement.clientWidth);
+
+    if (event === 'add') {
+        document.body.classList.add('wjcallback-body-scrolloff');
+        document.body.style.paddingRight = scrollbarWidth + 'px';
+    }
+
+    if (event === 'remove') {
+        document.body.classList.remove('wjcallback-body-scrolloff');
+        document.body.style.paddingRight = '';
+    }
 }
 
 function executeScriptElements(containerElement) {
