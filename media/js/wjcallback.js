@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
          });
     });
 
-    document.addEventListener('mouseup', (event) => {
+    document.addEventListener('mousedown', (event) => {
         let wjcmodal = document.getElementById('wjcallback-modal');
 
         if (!wjcmodal) {

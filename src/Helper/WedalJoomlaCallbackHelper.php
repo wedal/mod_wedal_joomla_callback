@@ -4,6 +4,7 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Helper;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Response\JsonResponse;
@@ -152,6 +153,23 @@ class WedalJoomlaCallbackHelper
 			$this->createField($form_field);
 		}
 
+		//Вложение
+		if ($this->params->get('showattachment', ''))
+		{
+			$form_field = new \stdClass();
+			$form_field->name = 'attachments';
+			$form_field->type = 'file';
+			$form_field->label = $this->params->get('attachmentlabel', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_LABEL_TITLE'));
+			$form_field->accept = $this->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'));
+
+			if ($this->params->get('allow_multi_attachment', ''))
+			{
+				$form_field->multiple = true;
+			}
+
+			$this->createField($form_field);
+		}
+
 		//Дополнительные поля
 		$customfields = $this->createCustomFields();
 
@@ -228,8 +246,6 @@ class WedalJoomlaCallbackHelper
 			return;
 		}
 
-		$app = Factory::getApplication();
-
 		$moduleId = $this->app->input->get('modid', null, 'int');
 		$page_url = urldecode($this->app->input->get('page', null, 'STRING'));
 
@@ -256,7 +272,7 @@ class WedalJoomlaCallbackHelper
 
 		$email =  $form->params->get('email', '');
 		if (!$email) {
-			$email = $app->get('mailfrom');
+			$email = $this->app->get('mailfrom');
 		}
 
 		$thankyoutext = $form->params->get('thankyoutext', '');
@@ -270,7 +286,7 @@ class WedalJoomlaCallbackHelper
 		ob_end_clean();
 
 		$to = $email;
-		$from = array($app->get('mailfrom') , $app->get('fromname') );
+		$from = array($this->app->get('mailfrom') , $this->app->get('fromname') );
 		$subject = $mailtitle;
 
 		$mailer = Factory::getMailer();
@@ -292,11 +308,104 @@ class WedalJoomlaCallbackHelper
 			}
 		}
 
+		//Вложение
+		if ($form->params->get('showattachment'))
+		{
+			$tmpPath = $this->app->get('tmp_path');
+
+			$files = $this->app->input->files->get('attachments');
+
+			if ($files[0]['name'])
+			{
+				foreach ($files as $file)
+				{
+					$filename = File::makeSafe($file['name']);
+					$src      = $file['tmp_name'];
+					$dest     = $tmpPath . '/' . $filename;
+
+					if (File::upload($src, $dest))
+					{
+						$file_ext = File::getExt($dest);
+
+						if ($this->isValidFileType($file_ext, $file['type'], $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'))))
+						{
+							$mailer->addAttachment($dest);
+						}
+						else
+						{
+							File::delete($dest);
+						}
+					}
+				}
+			}
+		}
+		//--
+
 		$mailer->setSubject($subject);
 		$mailer->setBody($body);
 		$mailer->isHTML();
 		$mailer->send();
 
+		//Удаляем файлы вложений после отправки письма
+		if ($form->params->get('showattachment') && is_array($files))
+		{
+			foreach ($files as $file)
+			{
+				$filename = File::makeSafe($file['name']);
+				$dest     = $tmpPath . '/' . $filename;
+
+				if (File::exists($dest)) {
+					File::delete($dest);
+				}
+			}
+		}
+
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+	}
+
+	public function isValidFileType($file_ext, $filetype, $accept) {
+
+		if (!$accept) {
+			return true;
+		}
+
+		$file_ext = strtolower($file_ext);
+		$filetype = strtolower($filetype);
+		$accept = strtolower($accept);
+
+		$accept_rules = explode(',', str_replace(' ', '', $accept));
+
+		if (count($accept_rules) == 0) {
+			return true;
+		}
+
+		//Разбираем все правила на отдельные расширения и MIME
+		foreach ($accept_rules as $accept_rule) {
+			if (strripos($accept_rule,'/')) {
+				if (strripos($accept_rule,'/*')) {
+					$rules_full_mime[] = stristr($accept_rule,'/*',true);
+				} else {
+					$rules_mime[] = $accept_rule;
+				}
+
+			} else {
+				$rules_ext[] = $accept_rule;
+			}
+		}
+
+		if (!empty($rules_ext) && (in_array($file_ext, $rules_ext) || in_array('.' . $file_ext, $rules_ext))) {
+			return true;
+		}
+
+		if (!empty($rules_mime) && in_array($filetype, $rules_mime)) {
+			return true;
+		}
+
+		//Остается случай, когда accept задан в формате image/*
+		if (!empty($rules_full_mime) && in_array(stristr($filetype,'/',true), $rules_full_mime)) {
+			return true;
+		}
+
+		return false;
 	}
 }

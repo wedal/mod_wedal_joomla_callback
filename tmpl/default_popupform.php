@@ -15,7 +15,7 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\Language\Text;
 ?>
 
-<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->params->get('wrapper_suffix') ?>" role="dialog" data-id="<?php echo $form->moduleid ?>">
+<div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform <?php echo $form->params->get('wrapper_suffix') ?>" role="dialog" data-id="<?php echo $form->moduleid ?>" enctype="multipart/form-data">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
         	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate <?php echo $form->params->get('form_suffix') ?>">

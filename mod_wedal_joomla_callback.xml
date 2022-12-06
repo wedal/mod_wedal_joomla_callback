@@ -316,6 +316,57 @@
 				/>
 
 				<field
+					type="radio"
+					name="showattachment"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWATTACHMENT_DESC"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWATTACHMENT"
+					default="0"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+					type="radio"
+					name="allow_multi_attachment"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_ALLOWMULTIATTACHMENT_DESC"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_ALLOWMULTIATTACHMENT"
+					default="0"
+					showon="showattachment:1"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+					name="attachmentformat"
+					type="text"
+					default=""
+					showon="showattachment:1"
+					hint="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_DESC"
+				/>
+
+				<field
+					name="attachmentlabel"
+					type="text"
+					default=""
+					showon="showattachment:1"
+					hint="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_LABEL_TITLE"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_LABEL"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_LABEL_DESC"
+				/>
+
+				<field
+					type="spacer"
+					name="spacer6"
+					hr="true"
+				/>
+
+				<field
 					name="thankyoutext"
 					type="textarea"
 					default=""
@@ -326,11 +377,6 @@
 					cols="5"
 				/>
 
-				<field
-					type="spacer"
-					name="spacer6"
-					hr="true"
-				/>
 			</fieldset>
 
 			<fieldset name="customfields">
