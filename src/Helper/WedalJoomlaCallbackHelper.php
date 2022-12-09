@@ -51,7 +51,7 @@ class WedalJoomlaCallbackHelper
 		$this->buttontext = $this->params->get('buttontext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
 		$this->thankyoutext = $this->params->get('thankyoutext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
 
-		$this->moduleclass_sfx = htmlspecialchars($this->params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$this->moduleclass_sfx = htmlspecialchars($this->params->get('moduleclass_sfx') ?? '', ENT_COMPAT, 'UTF-8');
 		$this->formdesc = $this->params->get('formdesc', '');
 
 		if ($this->params->get('showformtitle', '1')) {
