@@ -422,6 +422,7 @@
 				<field
 					name="button_suffix"
 					type="text"
+					showon="moduletype:0"
 					default=""
 					hint=""
 					label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONSUFFIX"
@@ -463,6 +464,46 @@
 					label="MOD_WEDAL_JOOMLA_CALLBACK_WRAPPERSUFFIX"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_WRAPPERSUFFIX_DESC"
 				/>
+			</fieldset>
+
+			<fieldset name="counters">
+				<fieldset name="counters_ym">
+
+					<field
+							name="counters_ym_note"
+							type="note"
+							class="alert alert-info"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_YMCOUNTER_NOTE"
+					/>
+
+					<field
+							name="ym_popup"
+							type="text"
+							showon="moduletype:0"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_YMPOPUP"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_YMPOPUP_DESC"
+					/>
+
+					<field
+							name="ym_submit"
+							type="text"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_YMSUBMIT"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_YMSUBMIT_DESC"
+					/>
+				</fieldset>
+
+				<fieldset name="counters_ga">
+					<field
+							name="counters_ga_note"
+							type="note"
+							class="alert alert-info"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_GACOUNTER_NOTE"
+					/>
+				</fieldset>
 			</fieldset>
 
 			<fieldset name="advanced">

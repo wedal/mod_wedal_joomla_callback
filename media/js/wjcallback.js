@@ -1,12 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     let module_options = Joomla.getOptions('wedal_joomla_callback');
+    let ya_counter = null;
+    if (typeof ym !== 'undefined') {
+        ya_counter = ym['a'][0][0];
+    }
 
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.wjcallback-link')) {
             return;
         }
         event.preventDefault();
+
+        if (ya_counter && event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid')) {
+            ym(ya_counter, 'reachGoal', event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid'));
+        }
 
         let modal_div = document.createElement('div');
         modal_div.id = "wjcallback-modal";
@@ -33,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 wjcmodal.innerHTML = response;
                 loader.remove();
 
-                //document.body.classList.add('wjcallback-body-scrolloff');
                 body_scrolloff('add');
 
                 wjcmodal.classList.add('show');
@@ -45,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 document.dispatchEvent(new CustomEvent('wjcOnFormPopupAfterLoad', {detail: wjcmodal}));
-
             });
     });
 
@@ -82,6 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 event.target.closest('form').querySelector('.modal-footer').style.display = 'none';
                 event.target.closest('form').querySelector('.modal-body').innerHTML = responce_obj.data.data.message;
+
+                if (ya_counter && event.target.closest('form').getAttribute('data-ym-aimid')) {
+                    ym(ya_counter, 'reachGoal', event.target.closest('form').getAttribute('data-ym-aimid'));
+                }
             } else {
                 alert(responce_obj.data.data.message);
             }
@@ -111,13 +121,11 @@ function wjcmodal_remove(wjcmodal) {
 
     setTimeout(function () {
         wjcmodal.remove();
-        //document.body.classList.remove('wjcallback-body-scrolloff');
         body_scrolloff('remove');
     }, 500);
 }
 
 function body_scrolloff(event) {
-
     const scrollbarWidth = parseInt(window.innerWidth) - parseInt(document.documentElement.clientWidth);
 
     if (event === 'add') {
