@@ -1,5 +1,15 @@
-<?php defined('_JEXEC') or die('Restricted access'); ?>
+<?php defined('_JEXEC') or die('Restricted access');
 
-<div id="WJC<?php echo $moduleId ?>" data-id="<?php echo $moduleId ?>" data-itemid="<?php echo $itemid ?>" class="wjcallback <?php echo $moduleclass_sfx ?>">
-    <a class="wjcallback-link" href="#"><?php echo $buttontext ?></a>
-</div>
+use Joomla\CMS\Factory;
+
+$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
+$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
+
+if ($params->get('showphonemask')) {
+	$wa->registerAndUseScript('maska', 'mod_wedal_joomla_callback/maska.js', [] ,['defer ' => true]);
+}
+?>
+
+<a data-id="<?php echo $module->id ?>" class="wjcallback-link btn <?php echo $params->get('button_suffix') ?>" href="#" <?php echo $params->get('ym_popup') ? 'data-ym-aimid="'.$params->get('ym_popup'). '"' : '' ?>><?php echo $form->buttontext ?></a>
+
