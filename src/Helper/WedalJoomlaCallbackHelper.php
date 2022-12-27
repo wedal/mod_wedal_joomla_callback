@@ -315,7 +315,14 @@ class WedalJoomlaCallbackHelper
 
 			$files = $this->app->input->files->get('attachments');
 
-			if ($files[0]['name'])
+			if (!$form->params->get('allow_multi_attachment', '')) {
+				$files_tmp = $files;
+				unset($files);
+				$files = array();
+				$files[0] = $files_tmp;
+			}
+
+			if (!empty($files[0]['name']))
 			{
 				foreach ($files as $file)
 				{
