@@ -1,12 +1,4 @@
 <?php
-/**
- * @package     Joomla.Administrator
- * @subpackage  mod_quickicon
- *
- * @copyright   (C) 2018 Open Source Matters, Inc. <https://www.joomla.org>
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
- */
-
 namespace Joomla\Module\WedalJoomlaCallback\Site\Dispatcher;
 
 \defined('JPATH_PLATFORM') or die;
@@ -15,11 +7,8 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Dispatcher;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
 use Joomla\CMS\Extension\ModuleInterface;
-//use Joomla\CMS\Helper\ModuleHelper;
-//use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Factory;
 use Joomla\Input\Input;
-//use Joomla\Module\WedalJoomlaCallback\Site\Helper\WedalJoomlaCallbackHelper;
-//use Joomla\Registry\Registry;
 
 /**
  * Dispatcher class for mod_wedal_jooomla_callback
@@ -58,6 +47,15 @@ class Dispatcher extends AbstractModuleDispatcher
 
 		$data['form'] = $this->moduleExtension->getHelper('WedalJoomlaCallbackHelper');
 		$data['form']->getForm($data['module']->id);
+
+		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
+		$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
+
+		if ($data['params']->get('showphonemask')) {
+			$wa->registerAndUseScript('maska', 'mod_wedal_joomla_callback/maska.js', [] ,['defer ' => true]);
+		}
+
 		$data['params']->set('layout', $data['params']->get('layout', 'default') . ($data['params']->get('moduletype') ? '_embeddedform' : ''));
 
 		return $data;
