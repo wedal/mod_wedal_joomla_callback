@@ -20,6 +20,7 @@ use Joomla\CMS\Form\Form;
  */
 class WedalJoomlaCallbackHelper
 {
+
 	public function __construct()
 	{
 		$this->app = Factory::getApplication();
@@ -206,7 +207,7 @@ class WedalJoomlaCallbackHelper
 			}
 
 
-			$this->createField($form_field, $customfields ? 'customfields' : '');
+			$this->createField($form_field, $customfields ? 'customfields' : 'fields');
 
 		}
 	}
@@ -243,7 +244,7 @@ class WedalJoomlaCallbackHelper
 		//Check token
 		if (!Session::checkToken()) {
 			echo json_encode(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
-			return;
+			return true;
 		}
 
 		$moduleId = $this->app->input->get('modid', null, 'int');
