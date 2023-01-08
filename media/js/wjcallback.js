@@ -67,7 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.append(loader_div);
 
         let loader = document.getElementById('wjcallback-loader');
-        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid=' + module_id + '&page=' + encodeURIComponent(window.location.href);
+
+        let itemid = '';
+        if (module_options['itemid']) {
+            itemid = '&Itemid=' + module_options['itemid'];
+        }
+
+        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid=' + module_id + itemid + '&page=' + encodeURIComponent(window.location.href);
         let formdata = new FormData(event.target.closest('form'));
 
         if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeSubmit', {detail: event.target, cancelable: true}))) {

@@ -20,6 +20,7 @@ use Joomla\CMS\Form\Form;
  */
 class WedalJoomlaCallbackHelper
 {
+
 	public function __construct()
 	{
 		$this->app = Factory::getApplication();
@@ -206,7 +207,7 @@ class WedalJoomlaCallbackHelper
 			}
 
 
-			$this->createField($form_field, $customfields ? 'customfields' : '');
+			$this->createField($form_field, $customfields ? 'customfields' : 'fields');
 
 		}
 	}
@@ -243,7 +244,7 @@ class WedalJoomlaCallbackHelper
 		//Check token
 		if (!Session::checkToken()) {
 			echo json_encode(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
-			return;
+			return true;
 		}
 
 		$moduleId = $this->app->input->get('modid', null, 'int');
@@ -259,8 +260,8 @@ class WedalJoomlaCallbackHelper
 
 		if (!$result)
 		{
-			$errors = $form->getErrors();
-			return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . $errors , 'error' => 0));
+			$errors = $form->form->getErrors();
+			return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . json_encode($errors) , 'error' => 0));
 		}
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
@@ -292,7 +293,7 @@ class WedalJoomlaCallbackHelper
 		$mailer = Factory::getMailer();
 		$mailer->setSender($from);
 
-		if ($form->values['email']) {
+		if (!empty($form->values['email'])) {
 			$mailer->addReplyTo($form->values['email']);
 		}
 

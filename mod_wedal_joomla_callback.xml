@@ -7,7 +7,7 @@
 	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 	<authorEmail>wedal@wedal.ru</authorEmail>
 	<authorUrl>wedal.ru</authorUrl>
-	<version>2.0.2</version>
+	<version>2.0.3</version>
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
@@ -43,8 +43,21 @@
 				</field>
 
 				<field
+						type="radio"
+						name="hideformbutton"
+						showon="moduletype:0"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_HIDEFORMBUTTON_DESC"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_HIDEFORMBUTTON"
+						default="0"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
 					name="buttontext"
-					showon="moduletype:0"
+					showon="moduletype:0[AND]hideformbutton:0"
 					type="text"
 					default=""
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT"
