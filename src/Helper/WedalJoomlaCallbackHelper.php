@@ -194,12 +194,12 @@ class WedalJoomlaCallbackHelper
 
 				$article = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Articles', 'Site', ['ignore_request' => true]);
 
-				$article->setState('article.id', $this->params->get('toslink'));
+				$article->setState('filter.article_id', $this->params->get('toslink'));
 				$article->setState('filter.published', 1);
 				$article->setState('params', Factory::getApplication()->getParams());
 				$article->setState('list.limit', 1);
-
 				$tos_article   = $article->getItems();
+
 				$article_slug     = $tos_article[0]->id . ':' . $tos_article[0]->alias;
 				$tos_link = Route::_(RouteHelper::getArticleRoute($article_slug, $tos_article[0]->catid, $tos_article[0]->language));
 
