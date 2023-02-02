@@ -14,6 +14,7 @@
 		<folder module="mod_wedal_joomla_callback">src</folder>
 		<folder>services</folder>
 		<folder>tmpl</folder>
+		<folder>src</folder>
 	</files>
 
 	<media destination="mod_wedal_joomla_callback" folder="media">
@@ -481,7 +482,6 @@
 
 			<fieldset name="counters">
 				<fieldset name="counters_ym">
-
 					<field
 							name="counters_ym_note"
 							type="note"
@@ -517,6 +517,99 @@
 							description="MOD_WEDAL_JOOMLA_CALLBACK_GACOUNTER_NOTE"
 					/>
 				</fieldset>
+			</fieldset>
+
+			<fieldset name="sms">
+
+				<field
+						name="sms_note"
+						type="note"
+						class="alert alert-info"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_NOTE"
+				/>
+
+				<field
+						type="radio"
+						name="enable_sms"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_ENABLE"
+						default="0"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+						name="sms_api_key"
+						type="text"
+						showon="enable_sms:1"
+						default=""
+						hint=""
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMSKEY"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMSKEY_DESC"
+				/>
+
+				<field
+						name="sms_recipient_number"
+						type="tel"
+						showon="enable_sms:1"
+						default=""
+						hint="MOD_WEDAL_JOOMLA_CALLBACK_SMS_RECIPIENT_NUMBER_TITLE"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_RECIPIENT_NUMBER"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_RECIPIENT_NUMBER_DESC"
+				/>
+
+				<field
+						name="sms_introtext"
+						type="text"
+						showon="enable_sms:1"
+						default=""
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_INTROTEXT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_INTROTEXT_DESC"
+				/>
+
+				<field
+						name="sms_send_fields"
+						type="textarea"
+						showon="enable_sms:1"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS_DESC"
+						default="name, phone, email, comment"
+						rows="3"
+				/>
+
+				<field
+						name="sms_send_fields_limit"
+						type="text"
+						showon="enable_sms:1"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS_LIMIT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS_LIMIT_DESC"
+						default="100"
+				/>
+
+				<field
+						name="sms_send_fields_total_limit"
+						type="text"
+						showon="enable_sms:1"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS_TOTAL_LIMIT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_FIELDS_TOTAL_LIMIT_DESC"
+						default="450"
+				/>
+
+				<field
+						type="radio"
+						name="show_smsinfo_in_mail"
+						showon="enable_sms:1"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_INFO_IN_MAIL"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_INFO_IN_MAIL_DESC"
+						default="0"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+
 			</fieldset>
 
 			<fieldset name="advanced">

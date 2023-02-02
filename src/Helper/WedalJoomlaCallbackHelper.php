@@ -64,6 +64,7 @@ class WedalJoomlaCallbackHelper
 		$this->createFields();
 
 		$this->fields = $this->form->getXml();
+
 	}
 
 	public function createField($form_params, $fieldset = 'fields'){  //!!!! Динамическая генерация полей через Jform
@@ -266,6 +267,11 @@ class WedalJoomlaCallbackHelper
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
 
+		//Отправка СМС
+		if ($form->params->get('enable_sms')) {
+			$sms_status = $this->sendSMS($form);
+		}
+
 		$mailtitle = $form->params->get('mailtitle', '');
 		if (!$mailtitle) {
 			$mailtitle = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
@@ -416,4 +422,54 @@ class WedalJoomlaCallbackHelper
 
 		return false;
 	}
+
+	public function sendSMS($form) {
+		if (!$form->params->get('sms_api_key') || !$form->params->get('sms_recipient_number')) {
+			return false;
+		}
+
+		//Формируем СМС сообщение
+		$sms_message = '';
+
+		if ($form->params->get('sms_introtext')) {
+			$sms_message .= $form->params->get('sms_introtext');
+		}
+
+		$sms_send_fields = $form->params->get('sms_send_fields');
+
+		if (!empty($sms_send_fields)) {
+			$sms_send_fields_array = explode(',', str_replace(' ', '', $sms_send_fields));
+			$sms_send_fields_limit = $form->params->get('sms_send_fields_limit', 100);
+			$sms_message_field_values = array();
+
+			foreach ($sms_send_fields_array as $sms_send_field) {
+				if (!empty($form->values[$sms_send_field]))	{
+					$sms_message_field_values[] = mb_strimwidth($form->values[$sms_send_field], 0, $sms_send_fields_limit, '..');
+				}
+			}
+
+			$sms_message .= implode(',', $sms_message_field_values);
+			$sms_message = mb_strimwidth($sms_message, 0, $form->params->get('sms_send_fields_total_limit', 450), '');
+		}
+
+		require_once('sms.ru.php');
+		$apikey =  $form->params->get('sms_api_key');
+		$sms = new \SMSRU($apikey);
+
+		$smsdata = new \stdClass();
+		$smsdata->to = $form->params->get('sms_recipient_number');
+		$smsdata->text = $sms_message;
+		$smsdata->partner_id = '410554';
+		$sms_response = $sms->send_one($smsdata);
+
+		if ($sms_response->status == "OK") {
+			$sms_balance = $sms->getBalance();
+			$return_message = Text::sprintf( 'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_SUCCESS', $sms_response->sms_id, $sms_balance->balance);
+		} else {
+			$return_message = Text::sprintf( 'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_ERROR', $sms_response->status_code, $sms_response->status_text);
+		}
+
+		return $return_message;
+	}
+
 }
