@@ -598,6 +598,19 @@
 
 				<field
 						type="radio"
+						name="sms_transliterate"
+						showon="enable_sms:1"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_TRANSLITERATE"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SMS_TRANSLITERATE_DESC"
+						default="0"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+						type="radio"
 						name="show_smsinfo_in_mail"
 						showon="enable_sms:1"
 						label="MOD_WEDAL_JOOMLA_CALLBACK_SMS_INFO_IN_MAIL"

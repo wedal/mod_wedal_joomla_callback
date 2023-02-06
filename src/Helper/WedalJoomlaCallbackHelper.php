@@ -459,6 +459,11 @@ class WedalJoomlaCallbackHelper
 		$smsdata = new \stdClass();
 		$smsdata->to = $form->params->get('sms_recipient_number');
 		$smsdata->text = $sms_message;
+
+		if ($form->params->get('sms_transliterate')) {
+			$smsdata->translit = 1;
+		}
+
 		$smsdata->partner_id = '410554';
 		$sms_response = $sms->send_one($smsdata);
 
