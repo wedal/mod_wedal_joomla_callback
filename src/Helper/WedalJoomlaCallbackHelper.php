@@ -444,7 +444,12 @@ class WedalJoomlaCallbackHelper
 
 			foreach ($sms_send_fields_array as $sms_send_field) {
 				if (!empty($form->values[$sms_send_field]))	{
-					$sms_message_field_values[] = mb_strimwidth($form->values[$sms_send_field], 0, $sms_send_fields_limit, '..');
+					if (is_array($form->values[$sms_send_field])) {
+						$sms_send_field_value = implode(', ', $form->values[$sms_send_field]);
+					} else {
+						$sms_send_field_value = (string) $form->values[$sms_send_field];
+					}
+					$sms_message_field_values[] = mb_strimwidth($sms_send_field_value, 0, $sms_send_fields_limit, '..');
 				}
 			}
 
