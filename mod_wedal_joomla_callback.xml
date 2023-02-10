@@ -406,7 +406,7 @@
 					name="enable_customfields"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_ENABLE_DESC"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_CUSTOMFIELDS_ENABLE"
-					default="1"
+					default="0"
 					class="btn-group btn-group-yesno"
 					>
 					<option value="1">JYES</option>
