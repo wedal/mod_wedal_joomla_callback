@@ -119,6 +119,7 @@
 					name="formdesc"
 					type="textarea"
 					default=""
+					filter="safehtml"
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_DESC"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_FORMDESC"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_FORMDESC_DESC"
