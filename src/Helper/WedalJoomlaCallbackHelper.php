@@ -18,7 +18,8 @@ use Joomla\CMS\Form\Form;
 /**
  * Helper for mod_wedal_joomla_callback
  */
-class WedalJoomlaCallbackHelper
+
+class WedalJoomlaCallbackHelper extends \stdClass
 {
 
 	public function __construct()
