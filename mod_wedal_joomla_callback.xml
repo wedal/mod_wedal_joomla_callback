@@ -626,6 +626,57 @@
 
 			</fieldset>
 
+			<fieldset name="telegram">
+
+				<field
+						name="telegram_note"
+						type="note"
+						class="alert alert-info"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAM_NOTE"
+				/>
+
+				<field
+						type="radio"
+						name="enable_telegram"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAM_ENABLE"
+						default="0"
+						class="btn-group btn-group-yesno"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+						name="telegram_api_key"
+						type="text"
+						showon="enable_telegram:1"
+						default=""
+						hint=""
+						label="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAMKEY"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAMKEY_DESC"
+				/>
+
+				<field
+						name="telegram_chat_id"
+						type="text"
+						showon="enable_telegram:1"
+						default=""
+						hint=""
+						label="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAMCHATID"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAMCHATID_DESC"
+				/>
+
+				<field
+						name="telegram_introtext"
+						type="text"
+						showon="enable_telegram:1"
+						default=""
+						label="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAM_INTROTEXT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_TELEGRAM_INTROTEXT_DESC"
+				/>
+
+			</fieldset>
+
 			<fieldset name="advanced">
 				<field
 					name="layout"

@@ -256,6 +256,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$form->getForm($moduleId);
 
 		$data = $this->app->input->post->getArray();
+
 		$form->values  = $form->form->filter($data);
 
 		$result = $form->form->validate($form->values);
@@ -273,6 +274,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$sms_status = $this->sendSMS($form);
 		}
 
+		//Отправка на почту
 		$mailtitle = $form->params->get('mailtitle', '');
 		if (!$mailtitle) {
 			$mailtitle = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
@@ -297,21 +299,21 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$from = array($this->app->get('mailfrom') , $this->app->get('fromname') );
 		$subject = $mailtitle;
 
-		$mailer = Factory::getMailer();
-		$mailer->setSender($from);
+		$this->mailer = Factory::getMailer();
+		$this->mailer->setSender($from);
 
 		if (!empty($form->values['email'])) {
-			$mailer->addReplyTo($form->values['email']);
+			$this->mailer->addReplyTo($form->values['email']);
 		}
 
-		$mailer->addRecipient($to);
+		$this->mailer->addRecipient($to);
 
 		if ($form->params->get('email_additional', '')) {
 			$additional_recipients = preg_split('/\r\n|[\r\n]/', $form->params->get('email_additional', ''));
 
 			foreach ($additional_recipients as $additional_recipient) {
 				if (MailHelper::isEmailAddress($additional_recipient)) {
-					$mailer->addRecipient($additional_recipient);
+					$this->mailer->addRecipient($additional_recipient);
 				}
 			}
 		}
@@ -321,7 +323,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		foreach ($form->form->getFieldset('customfields') as $field) {
 			if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
-				$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, $mailer);
+				$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, true);
 
 				if ($custom_attached_files && is_array($custom_attached_files)) {
 					$attached_files = array_merge($attached_files, $custom_attached_files);
@@ -331,17 +333,22 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		// Стандартное Вложение
 		if ($form->params->get('showattachment')) {
-			$standart_attached_files = $this->attach_file('attachments', $form, $mailer);
+			$standart_attached_files = $this->attach_file('attachments', $form, true);
 
 			if ($standart_attached_files && is_array($standart_attached_files)) {
 				$attached_files = array_merge($attached_files, $standart_attached_files);
 			}
 		}
 
-		$mailer->setSubject($subject);
-		$mailer->setBody($body);
-		$mailer->isHTML();
-		$mailer->send();
+		$this->mailer->setSubject($subject);
+		$this->mailer->setBody($body);
+		$this->mailer->isHTML();
+		$this->mailer->send();
+
+		//Отправка в Telegram. Должна быть до удаления загруженных файлов!
+		if ($form->params->get('enable_telegram')) {
+			$tg_status = $this->sendTelegram($form, $attached_files);
+		}
 
 		//Удаляем файлы вложений после отправки письма
 		if (!empty($attached_files))
@@ -362,9 +369,16 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
 	}
 
-	public function attach_file($file_field_name, $form, $mailer) {
-
-		//$mailer = Factory::getMailer();
+	/**
+	 * Прикрепляет файл к сообщению или письму
+	 *
+	 * @param   string   $file_field_name  	Имя файла вложения.
+	 * @param   mixed    $form    			Объект формы
+	 * @param   bool  	$attach_to_mail     Прикреплять ли файл к письму
+	 *
+	 * @return  boolean	True on success.
+	 */
+	public function attach_file($file_field_name, $form, $attach_to_mail) {
 
 		$files = $this->app->input->files->get($file_field_name);
 
@@ -401,7 +415,9 @@ class WedalJoomlaCallbackHelper extends \stdClass
 						||
 						($this->isValidFileType($file_ext, $file['type'], $custom_accept)))
 					{
-						$mailer->addAttachment($dest);
+						if ($attach_to_mail) {
+							$this->mailer->addAttachment($dest);
+						}
 					}
 					else
 					{
@@ -518,6 +534,79 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return $return_message;
+	}
+
+	public function sendTelegram($form, $attached_files) {
+		if (!$form->params->get('telegram_api_key') || !$form->params->get('telegram_chat_id')) {
+			return false;
+		}
+
+		//Формируем Telegram-сообщение
+		$tg_message = '';
+
+		if ($form->params->get('telegram_introtext')) {
+			$tg_message .= $form->params->get('telegram_introtext') . "\n\n";
+		}
+
+		foreach ($form->values as $key => $value) {
+			if (is_array($value)) {
+				$value = implode(', ', $value);
+			}
+
+			$tg_message .= $form->form->getFieldAttribute($key, 'label') . ': ' . $value . "\n";
+		}
+
+		$page_url = urldecode($this->app->input->get('page', null, 'STRING'));
+
+		if (!empty($page_url)) {
+			$tg_message .= "\n" . Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL'). "\n" . $page_url;
+		}
+
+		//Отправка запроса
+		$tg_query = array(
+			"chat_id" 	=> $form->params->get('telegram_chat_id'),
+			"text"  	=> $tg_message,
+			"parse_mode" => "html",
+		);
+
+		$ch = curl_init("https://api.telegram.org/bot". $form->params->get('telegram_api_key') ."/sendMessage?" . http_build_query($tg_query));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+
+		$result = curl_exec($ch);
+		curl_close($ch);
+
+		//Отправка вложений
+		if (empty($attached_files)) {
+			return true;
+		}
+
+		$tmpPath = $this->app->get('tmp_path');
+		$query_media = array();
+
+		foreach ($attached_files as $key => $file)
+		{
+			$filename = File::makeSafe($file['name']);
+			$dest     = $tmpPath . '/' . $filename;
+			$query_media[$key]['type'] = 'photo';
+			$query_media[$key]['media'] = 'attach://' . $filename;
+			//$query_media[$key]['caption'] = @todo: добавить caption для изображений из label полей
+
+			$tg_query[$filename] = new \CURLFile($dest);
+		}
+
+		$tg_query['media'] = json_encode($query_media);
+
+		$ch = curl_init('https://api.telegram.org/bot'. $form->params->get('telegram_api_key') .'/sendMediaGroup');
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $tg_query);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+		$res = curl_exec($ch);
+		curl_close($ch);
+
+		return true;
 	}
 
 }
