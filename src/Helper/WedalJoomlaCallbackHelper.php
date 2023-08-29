@@ -316,45 +316,27 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			}
 		}
 
-		//Вложение
-		if ($form->params->get('showattachment'))
-		{
-			$tmpPath = $this->app->get('tmp_path');
+		// Проверяем, есть ли среди дополнительных полей поля типа file и, если таковые имеются, прикрепляем выбранные файлы как вложения к письму
+		$attached_files = array();
 
-			$files = $this->app->input->files->get('attachments');
+		foreach ($form->form->getFieldset('customfields') as $field) {
+			if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
+				$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, $mailer);
 
-			if (!$form->params->get('allow_multi_attachment', '')) {
-				$files_tmp = $files;
-				unset($files);
-				$files = array();
-				$files[0] = $files_tmp;
-			}
-
-			if (!empty($files[0]['name']))
-			{
-				foreach ($files as $file)
-				{
-					$filename = File::makeSafe($file['name']);
-					$src      = $file['tmp_name'];
-					$dest     = $tmpPath . '/' . $filename;
-
-					if (File::upload($src, $dest))
-					{
-						$file_ext = File::getExt($dest);
-
-						if ($this->isValidFileType($file_ext, $file['type'], $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'))))
-						{
-							$mailer->addAttachment($dest);
-						}
-						else
-						{
-							File::delete($dest);
-						}
-					}
+				if ($custom_attached_files && is_array($custom_attached_files)) {
+					$attached_files = array_merge($attached_files, $custom_attached_files);
 				}
 			}
 		}
-		//--
+
+		// Стандартное Вложение
+		if ($form->params->get('showattachment')) {
+			$standart_attached_files = $this->attach_file('attachments', $form, $mailer);
+
+			if ($standart_attached_files && is_array($standart_attached_files)) {
+				$attached_files = array_merge($attached_files, $standart_attached_files);
+			}
+		}
 
 		$mailer->setSubject($subject);
 		$mailer->setBody($body);
@@ -362,9 +344,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$mailer->send();
 
 		//Удаляем файлы вложений после отправки письма
-		if ($form->params->get('showattachment') && is_array($files))
+		if (!empty($attached_files))
 		{
-			foreach ($files as $file)
+			$tmpPath = $this->app->get('tmp_path');
+
+			foreach ($attached_files as $file)
 			{
 				$filename = File::makeSafe($file['name']);
 				$dest     = $tmpPath . '/' . $filename;
@@ -376,6 +360,59 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+	}
+
+	public function attach_file($file_field_name, $form, $mailer) {
+
+		//$mailer = Factory::getMailer();
+
+		$files = $this->app->input->files->get($file_field_name);
+
+		$tmpPath = $this->app->get('tmp_path');
+
+		if ((!$form->params->get('allow_multi_attachment', '') && $file_field_name == 'attachments') || $file_field_name != 'attachments') {
+			$files_tmp = $files;
+			unset($files);
+			$files = array();
+			$files[0] = $files_tmp;
+		}
+
+		if (!empty($files[0]['name']))
+		{
+			$returned_files = $files;
+			foreach ($files as $key => $file)
+			{
+				$filename = File::makeSafe($file['name']);
+				$src      = $file['tmp_name'];
+				$dest     = $tmpPath . '/' . $filename;
+
+				if (File::upload($src, $dest))
+				{
+					$file_ext = File::getExt($dest);
+
+					//Проверяем допустимые типы файлов отдельно для стандартного вложения и отдельно для вложений из доп.полей
+					$custom_accept = $form->form->getField($file_field_name)->getAttribute('accept');
+
+					if (!$custom_accept) {
+						$custom_accept = $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'));
+					}
+
+					if (($file_field_name == 'attachments' && $this->isValidFileType($file_ext, $file['type'], $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'))))
+						||
+						($this->isValidFileType($file_ext, $file['type'], $custom_accept)))
+					{
+						$mailer->addAttachment($dest);
+					}
+					else
+					{
+						File::delete($dest);
+						unset($returned_files[$key]);
+					}
+				}
+			}
+			return $returned_files;
+		}
+
 	}
 
 	public function isValidFileType($file_ext, $filetype, $accept) {
