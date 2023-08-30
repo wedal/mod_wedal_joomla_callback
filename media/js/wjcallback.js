@@ -62,12 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
 
         let module_id = event.target.closest(".wjcallbackform").getAttribute('data-id');
-        let loader_div = document.createElement('div');
-        loader_div.id = "wjcallback-loader";
-        document.body.append(loader_div);
-
-        let loader = document.getElementById('wjcallback-loader');
-
         let itemid = '';
         if (module_options['itemid']) {
             itemid = '&Itemid=' + module_options['itemid'];
@@ -79,6 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeSubmit', {detail: event.target, cancelable: true}))) {
             return;
         }
+
+        let loader_div = document.createElement('div');
+        loader_div.id = "wjcallback-loader";
+        document.body.append(loader_div);
+
+        let loader = document.getElementById('wjcallback-loader');
 
         fetch(url, {
             method: 'POST',
