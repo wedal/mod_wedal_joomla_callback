@@ -71,7 +71,7 @@
             alert(wjcmodal.find('#' + wjcmodal_id + '_comment').attr('data-error'));
             return false;
 
-        } else if (wjcmodal.find('#' + wjcmodal_id + '_tos_box').length > 0 && wjcmodal.find('#' + wjcmodal_id + '_tos_box').hasClass('required') && wjcmodal.find('#' + wjcmodal_id + '_tos_box').attr("checked") != 'checked') {
+        } else if (wjcmodal.find('#' + wjcmodal_id + '_tos_box').length > 0 && wjcmodal.find('#' + wjcmodal_id + '_tos_box').hasClass('required') && wjcmodal.find('#' + wjcmodal_id + '_tos_box').prop("checked") != true) {
             wjcmodal.find('#' + wjcmodal_id + '_tos_box').focus();
             alert(wjcmodal.find('#' + wjcmodal_id + '_tos_box').attr('data-error'));
             return false;
