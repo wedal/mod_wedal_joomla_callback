@@ -18,5 +18,10 @@ use Joomla\CMS\Language\Text;
 
     <?php if (!empty($page_url)) { ?>
         <div><?php echo Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL').$page_url ?></div>
-    <?php } ?>
+	<?php } ?>
+
+	<?php if ($form->params->get('show_smsinfo_in_mail') && !empty($sms_status)) { ?>
+        <div><?php echo $sms_status ?></div>
+	<?php } ?>
+
 </div>
