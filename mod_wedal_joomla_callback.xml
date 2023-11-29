@@ -3,11 +3,11 @@
 	<name>Wedal Joomla Callback</name>
 	<author>Wedal</author>
 	<creationDate>2018</creationDate>
-	<copyright>Copyright (C) 2022 Wedal.ru. All rights reserved.</copyright>
+	<copyright>Copyright (C) 2023 Wedal.ru. All rights reserved.</copyright>
 	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 	<authorEmail>wedal@wedal.ru</authorEmail>
 	<authorUrl>wedal.ru</authorUrl>
-	<version>2.0.4</version>
+	<version>2.1.0</version>
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
