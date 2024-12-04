@@ -67,6 +67,15 @@
 				/>
 
 				<field
+						name="send_buttontext"
+						type="text"
+						default=""
+						hint="MOD_WEDAL_JOOMLA_CALLBACK_SEND"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SENDBUTTONTEXT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SENDBUTTONTEXT_DESC"
+				/>
+
+				<field
 					name="email"
 					type="email"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_RECIPIENT"
