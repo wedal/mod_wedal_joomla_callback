@@ -7,7 +7,7 @@
 	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 	<authorEmail>wedal@wedal.ru</authorEmail>
 	<authorUrl>wedal.ru</authorUrl>
-	<version>2.1.0</version>
+	<version>2.1.1</version>
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
@@ -64,6 +64,15 @@
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DESC"
+				/>
+
+				<field
+						name="send_buttontext"
+						type="text"
+						default=""
+						hint="MOD_WEDAL_JOOMLA_CALLBACK_SEND"
+						label="MOD_WEDAL_JOOMLA_CALLBACK_SENDBUTTONTEXT"
+						description="MOD_WEDAL_JOOMLA_CALLBACK_SENDBUTTONTEXT_DESC"
 				/>
 
 				<field

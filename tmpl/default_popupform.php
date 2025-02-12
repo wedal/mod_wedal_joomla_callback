@@ -51,7 +51,7 @@ use Joomla\CMS\Language\Text;
 
         		<div class="modal-footer">
                     <?php echo JHtml::_( 'form.token' ); ?>
-        			<button class="btn <?php echo $form->params->get('submit_suffix') ?>" type="submit"><?php echo Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND'); ?></button>
+        			<button class="btn <?php echo $form->params->get('submit_suffix') ?>" type="submit"><?php echo $form->params->get('send_buttontext', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SEND")) ?></button>
         		</div>
         	</form>
         </div>

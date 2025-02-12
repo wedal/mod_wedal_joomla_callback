@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let loader = document.getElementById('wjcallback-loader');
         let wjcmodal = document.getElementById('wjcallback-modal');
-        let module_id = event.target.getAttribute('data-id');
+        let module_id = event.target.closest('.wjcallback-link').getAttribute('data-id');
         let itemid = '';
 
         if (module_options['itemid']) {
