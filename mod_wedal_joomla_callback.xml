@@ -393,6 +393,7 @@
 				<field
 					name="thankyoutext"
 					type="textarea"
+					filter="safehtml"
 					default=""
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_THANKYOU"
