@@ -60,6 +60,8 @@
 }
 
 .wjcallbackform .form-validate input[type="text"],
+.wjcallbackform .form-validate input[type="tel"],
+.wjcallbackform .form-validate input[type="email"],
 .wjcallbackform .form-validate textarea {
     width: 100%;
     box-sizing: border-box;
