@@ -356,11 +356,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
 
-		//Отправка СМС
-		if ($form->params->get('enable_sms')) {
-			$sms_status = $this->sendSMS($form);
-		}
-
 		//Отправка на почту
 		$mailtitle = $form->params->get('mailtitle', '');
 		if (!$mailtitle) {
@@ -409,6 +404,15 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$attached_files = array();
 
 		try {
+			//Отправка СМС
+			if ($form->params->get('enable_sms')) {
+				$sms_status = $this->sendSMS($form);
+
+				if ($sms_status === false) {
+					return $this->getDeliveryErrorResponse();
+				}
+			}
+
 			foreach ($form->form->getFieldset('customfields') as $field) {
 				if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
 					$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, true);
@@ -431,12 +435,19 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$this->mailer->setSubject($subject);
 			$this->mailer->setBody($body);
 			$this->mailer->isHTML();
-			$this->mailer->send();
+
+			if ($this->mailer->send() !== true) {
+				return $this->getDeliveryErrorResponse();
+			}
 
 			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
 			if ($form->params->get('enable_telegram')) {
-				$tg_status = $this->sendTelegram($form, $attached_files);
+				if (!$this->sendTelegram($form, $attached_files)) {
+					return $this->getDeliveryErrorResponse();
+				}
 			}
+		} catch (\Throwable $exception) {
+			return $this->getDeliveryErrorResponse();
 		} finally {
 			if (!empty($attached_files)) {
 				$tmpPath = $this->app->get('tmp_path');
@@ -513,6 +524,12 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	private function getSpamProtectionResponse()
 	{
 		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION_ERROR'), 'error' => 1));
+	}
+
+	// Возвращает нейтральный ответ, не раскрывая детали сбоя доставки.
+	private function getDeliveryErrorResponse()
+	{
+		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR'), 'error' => 1));
 	}
 
 	/**
@@ -688,11 +705,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$smsdata->partner_id = '410554';
 		$sms_response = $sms->send_one($smsdata);
 
-		if ($sms_response->status == "OK") {
+		if (isset($sms_response->status) && $sms_response->status == "OK") {
 			$sms_balance = $sms->getBalance();
 			$return_message = Text::sprintf( 'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_SUCCESS', $sms_response->sms_id, $sms_balance->balance);
 		} else {
-			$return_message = Text::sprintf( 'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_ERROR', $sms_response->status_code, $sms_response->status_text);
+			return false;
 		}
 
 		return $return_message;
@@ -733,13 +750,23 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		);
 
 		$ch = curl_init("https://api.telegram.org/bot". $form->params->get('telegram_api_key') ."/sendMessage?" . http_build_query($tg_query));
+
+		if ($ch === false) {
+			return false;
+		}
+
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($ch, CURLOPT_HEADER, false);
 
 		$result = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
+
+		if (!$this->isSuccessfulTelegramResponse($result, $httpCode)) {
+			return false;
+		}
 
 		//Отправка вложений
 		if (empty($attached_files)) {
@@ -763,6 +790,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$tg_query['media'] = json_encode($query_media);
 
 		$ch = curl_init('https://api.telegram.org/bot'. $form->params->get('telegram_api_key') .'/sendMediaGroup');
+
+		if ($ch === false) {
+			return false;
+		}
+
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $tg_query);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -770,9 +802,22 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($ch, CURLOPT_HEADER, false);
 		$res = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 
-		return true;
+		return $this->isSuccessfulTelegramResponse($res, $httpCode);
+	}
+
+	// Проверяет транспортный и API-результат Telegram, не раскрывая ответ пользователю.
+	private function isSuccessfulTelegramResponse($response, $httpCode)
+	{
+		if (!is_string($response) || $httpCode < 200 || $httpCode >= 300) {
+			return false;
+		}
+
+		$payload = json_decode($response);
+
+		return is_object($payload) && !empty($payload->ok);
 	}
 
 }
