@@ -7,6 +7,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Mail\MailHelper;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
@@ -256,19 +257,29 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 			if ($this->params->get('toslink', '#') != '#')
 			{
+				$tosLinkText = $this->params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE'));
+				$form_field->label = $tosLinkText;
 
-				$article = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Articles', 'Site', ['ignore_request' => true]);
+				try {
+					$article = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Articles', 'Site', ['ignore_request' => true]);
 
-				$article->setState('filter.article_id', $this->params->get('toslink'));
-				$article->setState('filter.published', 1);
-				$article->setState('params', Factory::getApplication()->getParams());
-				$article->setState('list.limit', 1);
-				$tos_article   = $article->getItems();
+					$article->setState('filter.article_id', $this->params->get('toslink'));
+					$article->setState('filter.published', 1);
+					$article->setState('params', Factory::getApplication()->getParams());
+					$article->setState('list.limit', 1);
+					$tosArticles = $article->getItems();
 
-				$article_slug     = $tos_article[0]->id . ':' . $tos_article[0]->alias;
-				$tos_link = Route::_(RouteHelper::getArticleRoute($article_slug, $tos_article[0]->catid, $tos_article[0]->language));
-
-				$form_field->label = Text::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $tos_link, $this->params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE')));
+					if (!isset($tosArticles[0]) || !is_object($tosArticles[0])) {
+						Log::add('The configured Terms of Service article is unavailable.', Log::WARNING, 'mod_wedal_joomla_callback');
+					} else {
+						$tosArticle = $tosArticles[0];
+						$articleSlug = $tosArticle->id . ':' . $tosArticle->alias;
+						$tosLink = Route::_(RouteHelper::getArticleRoute($articleSlug, $tosArticle->catid, $tosArticle->language));
+						$form_field->label = Text::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $tosLink, $tosLinkText);
+					}
+				} catch (\Throwable $exception) {
+					Log::add('The configured Terms of Service article could not be loaded.', Log::WARNING, 'mod_wedal_joomla_callback');
+				}
 			}
 
 
