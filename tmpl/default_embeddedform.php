@@ -13,12 +13,13 @@
 
 defined('_JEXEC') or die('Restricted access');
 
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 ?>
 
 <div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform embeddedform <?php echo $form->params->get('wrapper_suffix') ?>" data-id="<?php echo $form->moduleid ?>">
     <div class="wjcallbackform-wrapper message-container">
-    	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate <?php echo $form->params->get('form_suffix') ?>" enctype="multipart/form-data" <?php echo $form->params->get('ym_submit') ? 'data-ym-aimid="'.$form->params->get('ym_submit'). '"' : '' ?>>
+        	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" class="form-validate <?php echo $form->params->get('form_suffix') ?>" enctype="multipart/form-data" <?php echo $form->params->get('ym_submit') ? 'data-ym-aimid="'.$form->params->get('ym_submit'). '"' : '' ?>>
     			<input type="text" name="wjcallback_website" value="" autocomplete="off" tabindex="-1" aria-hidden="true" class="wjcallback-honeypot">
 
             <?php if (!empty($form->formtitle)) { ?>
@@ -46,7 +47,7 @@ use Joomla\CMS\Language\Text;
     		</div>
 
     		<div class="modal-footer">
-                <?php echo JHtml::_( 'form.token' ); ?>
+                <?php echo HTMLHelper::_('form.token'); ?>
                 <button class="btn <?php echo $form->params->get('submit_suffix') ?>" type="submit"><?php echo $form->params->get('send_buttontext', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SEND")) ?></button>
     		</div>
 

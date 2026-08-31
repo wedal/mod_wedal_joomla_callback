@@ -4,7 +4,7 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Helper;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
+use Joomla\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Log\Log;
@@ -87,7 +87,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$this->formtitle = $this->params->get('formtitle', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
 		}
 
-		$this->form = Form::getInstance('form'.$this->moduleid, '<form><fieldset name="fields"></fieldset></form>'); //array("control" => "WJCForm_" . $this->moduleid )
+		$this->form = new Form('form'.$this->moduleid);
+		$this->form->load('<form><fieldset name="fields"></fieldset></form>'); //array("control" => "WJCForm_" . $this->moduleid )
 
 		$this->createFields();
 
@@ -577,11 +578,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 				}
 
 				$fileExt = strtolower(File::getExt($file['name']));
-				$finfo = finfo_open(FILEINFO_MIME_TYPE);
-				$mimeType = $finfo ? finfo_file($finfo, $file['tmp_name']) : false;
+				$mimeType = false;
+				$finfo = new \finfo(FILEINFO_MIME_TYPE);
 
 				if ($finfo) {
-					finfo_close($finfo);
+					$mimeType = $finfo->file($file['tmp_name']);
 				}
 
 				$customAccept = $form->form->getField($file_field_name)->getAttribute('accept');
@@ -774,7 +775,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$result = curl_exec($ch);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		curl_close($ch);
+		unset($ch);
 
 		if (!$this->isSuccessfulTelegramResponse($result, $httpCode)) {
 			return false;
@@ -815,7 +816,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		curl_setopt($ch, CURLOPT_HEADER, false);
 		$res = curl_exec($ch);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		curl_close($ch);
+		unset($ch);
 
 		return $this->isSuccessfulTelegramResponse($res, $httpCode);
 	}
