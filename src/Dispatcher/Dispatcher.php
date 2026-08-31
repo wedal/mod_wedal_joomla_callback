@@ -45,7 +45,9 @@ class Dispatcher extends AbstractModuleDispatcher
 		$data = parent::getLayoutData();
 
 		$data['form'] = $this->moduleExtension->getHelper('WedalJoomlaCallbackHelper');
-		$data['form']->getForm($data['module']->id);
+		if (!$data['form']->getForm($data['module']->id)) {
+			throw new \RuntimeException('The requested callback module is unavailable.', 404);
+		}
 
 		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
 		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);

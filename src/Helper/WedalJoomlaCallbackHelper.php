@@ -58,7 +58,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$this->moduleid = (int) $moduleid;
 		}
 
-		$module = ModuleHelper::getModuleById((string) $this->moduleid);
+		$module = $this->getAccessibleModule($this->moduleid);
+
+		if ($module === null) {
+			return false;
+		}
 
 		$this->params = new Registry;
 		$this->params->loadString($module->params);
@@ -88,6 +92,29 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$this->fields = $this->form->getXml();
 
+		return true;
+	}
+
+	// Возвращает модуль, доступный текущему посетителю и назначенный на текущую страницу.
+	private function getAccessibleModule($moduleId)
+	{
+		if ($moduleId <= 0) {
+			return null;
+		}
+
+		$module = ModuleHelper::getModuleById((string) $moduleId);
+
+		if (
+			!is_object($module)
+			|| $module->module !== 'mod_wedal_joomla_callback'
+			|| (int) $module->published !== 1
+			|| (int) $module->client_id !== 0
+			|| !in_array((int) $module->access, $this->app->getIdentity()->getAuthorisedViewLevels(), true)
+		) {
+			return null;
+		}
+
+		return $module;
 	}
 
 	// Добавляет динамически сформированное поле в форму.
@@ -271,7 +298,9 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$moduleId = Factory::getApplication()->input->get('modid', null, 'int');
 
 		$form = new WedalJoomlaCallbackHelper;
-		$form->getForm($moduleId);
+		if (!$form->getForm($moduleId)) {
+			return $this->getInvalidModuleResponse();
+		}
 
 		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_popupform');
 		return false;
@@ -299,7 +328,9 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		$form = new WedalJoomlaCallbackHelper;
-		$form->getForm($moduleId, false);
+		if (!$form->getForm($moduleId, false)) {
+			return $this->getInvalidModuleResponse();
+		}
 
 		$data = $this->app->input->post->getArray();
 
@@ -422,6 +453,12 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+	}
+
+	// Возвращает нейтральный ответ, не раскрывая конфигурацию недоступного модуля.
+	private function getInvalidModuleResponse()
+	{
+		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
 	}
 
 	// Проверяет, что пользователь заполнял форму не слишком быстро.
