@@ -21,6 +21,22 @@ use Joomla\CMS\Form\Form;
 
 class WedalJoomlaCallbackHelper extends \stdClass
 {
+	private const SAFE_ATTACHMENT_TYPES = array(
+		'jpg' => 'image/jpeg',
+		'jpeg' => 'image/jpeg',
+		'png' => 'image/png',
+		'gif' => 'image/gif',
+		'webp' => 'image/webp',
+		'avif' => 'image/avif',
+		'bmp' => 'image/bmp',
+		'tif' => 'image/tiff',
+		'tiff' => 'image/tiff',
+		'pdf' => 'application/pdf',
+		'doc' => 'application/msword',
+		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'xls' => 'application/vnd.ms-excel',
+		'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	);
 
 	public function __construct()
 	{
@@ -321,47 +337,46 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		// Проверяем, есть ли среди дополнительных полей поля типа file и, если таковые имеются, прикрепляем выбранные файлы как вложения к письму
 		$attached_files = array();
 
-		foreach ($form->form->getFieldset('customfields') as $field) {
-			if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
-				$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, true);
+		try {
+			foreach ($form->form->getFieldset('customfields') as $field) {
+				if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
+					$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, true);
 
-				if ($custom_attached_files && is_array($custom_attached_files)) {
-					$attached_files = array_merge($attached_files, $custom_attached_files);
+					if ($custom_attached_files && is_array($custom_attached_files)) {
+						$attached_files = array_merge($attached_files, $custom_attached_files);
+					}
 				}
 			}
-		}
 
-		// Стандартное Вложение
-		if ($form->params->get('showattachment')) {
-			$standart_attached_files = $this->attach_file('attachments', $form, true);
+			// Стандартное Вложение
+			if ($form->params->get('showattachment')) {
+				$standart_attached_files = $this->attach_file('attachments', $form, true);
 
-			if ($standart_attached_files && is_array($standart_attached_files)) {
-				$attached_files = array_merge($attached_files, $standart_attached_files);
+				if ($standart_attached_files && is_array($standart_attached_files)) {
+					$attached_files = array_merge($attached_files, $standart_attached_files);
+				}
 			}
-		}
 
-		$this->mailer->setSubject($subject);
-		$this->mailer->setBody($body);
-		$this->mailer->isHTML();
-		$this->mailer->send();
+			$this->mailer->setSubject($subject);
+			$this->mailer->setBody($body);
+			$this->mailer->isHTML();
+			$this->mailer->send();
 
-		//Отправка в Telegram. Должна быть до удаления загруженных файлов!
-		if ($form->params->get('enable_telegram')) {
-			$tg_status = $this->sendTelegram($form, $attached_files);
-		}
+			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
+			if ($form->params->get('enable_telegram')) {
+				$tg_status = $this->sendTelegram($form, $attached_files);
+			}
+		} finally {
+			if (!empty($attached_files)) {
+				$tmpPath = $this->app->get('tmp_path');
 
-		//Удаляем файлы вложений после отправки письма
-		if (!empty($attached_files))
-		{
-			$tmpPath = $this->app->get('tmp_path');
+				foreach ($attached_files as $file) {
+					$filename = $file['stored_name'];
+					$dest = $tmpPath . '/' . $filename;
 
-			foreach ($attached_files as $file)
-			{
-				$filename = File::makeSafe($file['name']);
-				$dest     = $tmpPath . '/' . $filename;
-
-				if (File::exists($dest)) {
-					File::delete($dest);
+					if (File::exists($dest)) {
+						File::delete($dest);
+					}
 				}
 			}
 		}
@@ -393,36 +408,50 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		if (!empty($files[0]['name']))
 		{
-			$returned_files = $files;
+			$returned_files = array();
+
 			foreach ($files as $key => $file)
 			{
-				$filename = File::makeSafe($file['name']);
-				$src      = $file['tmp_name'];
-				$dest     = $tmpPath . '/' . $filename;
+				if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+					continue;
+				}
 
-				if (File::upload($src, $dest))
-				{
-					$file_ext = File::getExt($dest);
+				$fileExt = strtolower(File::getExt($file['name']));
+				$finfo = finfo_open(FILEINFO_MIME_TYPE);
+				$mimeType = $finfo ? finfo_file($finfo, $file['tmp_name']) : false;
 
-					//Проверяем допустимые типы файлов отдельно для стандартного вложения и отдельно для вложений из доп.полей
-					$custom_accept = $form->form->getField($file_field_name)->getAttribute('accept');
+				if ($finfo) {
+					finfo_close($finfo);
+				}
 
-					if (!$custom_accept) {
-						$custom_accept = $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'));
+				$customAccept = $form->form->getField($file_field_name)->getAttribute('accept');
+				$attachmentAccept = trim((string) $form->params->get('attachmentformat', ''));
+				
+				if ($file_field_name === 'attachments') {
+					if (!empty($attachmentAccept)) {
+						$accept = $attachmentAccept;
+					} else {
+						$accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
 					}
+				} else {
+					$accept = $customAccept;
+				}
 
-					if (($file_field_name == 'attachments' && $this->isValidFileType($file_ext, $file['type'], $form->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'))))
-						||
-						($this->isValidFileType($file_ext, $file['type'], $custom_accept)))
-					{
-						if ($attach_to_mail) {
-							$this->mailer->addAttachment($dest);
-						}
-					}
-					else
-					{
-						File::delete($dest);
-						unset($returned_files[$key]);
+
+				if (!$this->isValidFileType($fileExt, $mimeType, $accept)) {
+					continue;
+				}
+
+				$storedName = bin2hex(random_bytes(16)) . '.' . $fileExt;
+				$dest = $tmpPath . '/' . $storedName;
+
+				if (File::upload($file['tmp_name'], $dest)) {
+					$file['stored_name'] = $storedName;
+					$file['mime_type'] = $mimeType;
+					$returned_files[$key] = $file;
+
+					if ($attach_to_mail) {
+						$this->mailer->addAttachment($dest, File::makeSafe($file['name']));
 					}
 				}
 			}
@@ -433,8 +462,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 	public function isValidFileType($file_ext, $filetype, $accept) {
 
-		if (!$accept) {
-			return true;
+		if (!$accept || !is_string($filetype)) {
+			return false;
 		}
 
 		$file_ext = strtolower($file_ext);
@@ -443,8 +472,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$accept_rules = explode(',', str_replace(' ', '', $accept));
 
-		if (count($accept_rules) == 0) {
-			return true;
+		if (count($accept_rules) == 0 && (!isset(self::SAFE_ATTACHMENT_TYPES[$file_ext]) || self::SAFE_ATTACHMENT_TYPES[$file_ext] !== $filetype)) {
+			return false;
 		}
 
 		//Разбираем все правила на отдельные расширения и MIME
@@ -588,13 +617,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		foreach ($attached_files as $key => $file)
 		{
-			$filename = File::makeSafe($file['name']);
+			$filename = $file['stored_name'];
 			$dest     = $tmpPath . '/' . $filename;
 			$query_media[$key]['type'] = 'photo';
 			$query_media[$key]['media'] = 'attach://' . $filename;
 			//$query_media[$key]['caption'] = @todo: добавить caption для изображений из label полей
 
-			$tg_query[$filename] = new \CURLFile($dest);
+			$tg_query[$filename] = new \CURLFile($dest, $file['mime_type'], File::makeSafe($file['name']));
 		}
 
 		$tg_query['media'] = json_encode($query_media);

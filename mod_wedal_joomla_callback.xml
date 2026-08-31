@@ -367,7 +367,7 @@
 				<field
 					name="attachmentformat"
 					type="text"
-					default=""
+					default="image/*,.pdf,.doc,.docx,.xls,.xlsx"
 					showon="showattachment:1"
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT"
