@@ -19,6 +19,7 @@ use Joomla\CMS\Language\Text;
 <div id="WJCForm<?php echo $form->moduleid ?>" class="wjcallbackform embeddedform <?php echo $form->params->get('wrapper_suffix') ?>" data-id="<?php echo $form->moduleid ?>">
     <div class="wjcallbackform-wrapper message-container">
     	<form method="post" name="WJCForm<?php echo $form->moduleid ?>" action="<?php JURI::current(); ?>" class="form-validate <?php echo $form->params->get('form_suffix') ?>" enctype="multipart/form-data" <?php echo $form->params->get('ym_submit') ? 'data-ym-aimid="'.$form->params->get('ym_submit'). '"' : '' ?>>
+    			<input type="text" name="wjcallback_website" value="" autocomplete="off" tabindex="-1" aria-hidden="true" class="wjcallback-honeypot">
 
             <?php if (!empty($form->formtitle)) { ?>
                 <div class="modal-header">

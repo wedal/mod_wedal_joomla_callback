@@ -404,6 +404,62 @@
 
 			</fieldset>
 
+			<fieldset name="antispam" label="MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION">
+				<field
+					type="radio"
+					name="enable_antispam"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_ENABLE_ANTISPAM"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_ENABLE_ANTISPAM_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+					name="rate_limit_requests"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_REQUESTS"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_REQUESTS_DESC"
+					default="3"
+					min="1"
+					max="20"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="rate_limit_window"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_WINDOW"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_WINDOW_DESC"
+					default="3600"
+					min="60"
+					max="86400"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="minimum_fill_time"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_MINIMUM_FILL_TIME"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_MINIMUM_FILL_TIME_DESC"
+					default="3"
+					min="0"
+					max="60"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="captcha"
+					type="plugins"
+					folder="captcha"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA_DESC"
+					default="0"
+				/>
+			</fieldset>
+
 			<fieldset name="customfields">
 				<field
 					name="customfields_note"

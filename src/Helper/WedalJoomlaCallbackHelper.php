@@ -38,6 +38,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 	);
 
+	// Инициализирует приложение и параметры JavaScript.
 	public function __construct()
 	{
 		$this->app = Factory::getApplication();
@@ -48,7 +49,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
 	}
 
-	public function getForm($moduleid)
+	// Загружает параметры модуля и формирует поля формы.
+	public function getForm($moduleid, $startFormTimer = true)
 	{
 		if (is_array($moduleid)) {
 			$this->moduleid = $this->app->input->get('modid', null, 'int');
@@ -60,6 +62,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$this->params = new Registry;
 		$this->params->loadString($module->params);
+		if ($startFormTimer) {
+			$this->formStartedAt = time();
+			$this->app->getSession()->set('wjcallback.form_started.' . $this->moduleid, $this->formStartedAt);
+		}
 
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
 
@@ -84,7 +90,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 	}
 
-	public function createField($form_params, $fieldset = 'fields'){  //!!!! Динамическая генерация полей через Jform
+	// Добавляет динамически сформированное поле в форму.
+	public function createField($form_params, $fieldset = 'fields'){
 		$note = new \SimpleXMLElement('<field />');
 
 		$form_params->class = $form_params->name;
@@ -192,6 +199,18 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		//Дополнительные поля
 		$customfields = $this->createCustomFields();
 
+		if ($this->params->get('captcha', '0') !== '0') {
+			$form_field = new \stdClass();
+			$form_field->name = 'captcha';
+			$form_field->type = 'captcha';
+			$form_field->captcha = $this->params->get('captcha');
+			$form_field->validate = 'captcha';
+			$form_field->required = true;
+			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA');
+
+			$this->createField($form_field);
+		}
+
 		//Согласие с условиями
 		if ($this->params->get('showtos'))
 		{
@@ -246,6 +265,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return true;
 	}
 
+	// Возвращает разметку всплывающей формы для AJAX-запроса.
 	public function getFormAjax()
 	{
 		$moduleId = Factory::getApplication()->input->get('modid', null, 'int');
@@ -257,6 +277,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return false;
 	}
 
+	// Проверяет и отправляет заявку, полученную через AJAX.
 	public function sendFormAjax()
 	{
 		//Check token
@@ -278,9 +299,19 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		$form = new WedalJoomlaCallbackHelper;
-		$form->getForm($moduleId);
+		$form->getForm($moduleId, false);
 
 		$data = $this->app->input->post->getArray();
+
+		if ($form->params->get('enable_antispam', 1)) {
+			if (!empty($data['wjcallback_website']) || !$this->hasMinimumFillTime($moduleId, $form->params)) {
+				return $this->getSpamProtectionResponse();
+			}
+
+			if ($this->isRateLimited($moduleId, $form->params)) {
+				return $this->getSpamProtectionResponse();
+			}
+		}
 
 		$form->values  = $form->form->filter($data);
 
@@ -393,6 +424,60 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
 	}
 
+	// Проверяет, что пользователь заполнял форму не слишком быстро.
+	private function hasMinimumFillTime($moduleId, Registry $params)
+	{
+		$minimumFillTime = max(0, min(60, (int) $params->get('minimum_fill_time', 3)));
+		$formStartedAt = (int) $this->app->getSession()->get('wjcallback.form_started.' . $moduleId, 0);
+
+		return $formStartedAt > 0 && time() - $formStartedAt >= $minimumFillTime;
+	}
+
+	// Проверяет и увеличивает счётчики лимита заявок.
+	private function isRateLimited($moduleId, Registry $params)
+	{
+		$maximumRequests = max(1, min(20, (int) $params->get('rate_limit_requests', 3)));
+		$window = max(60, min(86400, (int) $params->get('rate_limit_window', 3600)));
+		$now = time();
+		$sessionId = (string) $this->app->getSession()->getId();
+		$ipAddress = (string) $this->app->input->server->getString('REMOTE_ADDR', 'unknown');
+		$cache = Factory::getCache('mod_wedal_joomla_callback', 'callback');
+		$keys = array(
+			'module:' . $moduleId,
+			'ip:' . hash('sha256', $ipAddress),
+			'session:' . hash('sha256', $sessionId),
+		);
+		$cacheEntries = array();
+
+		foreach ($keys as $key) {
+			$cacheId = 'rate_limit_' . hash('sha256', $key);
+			$timestamps = $cache->get($cacheId, 'mod_wedal_joomla_callback');
+			$timestamps = is_array($timestamps) ? $timestamps : array();
+			$timestamps = array_values(array_filter($timestamps, static function ($timestamp) use ($now, $window) {
+				return is_int($timestamp) && $timestamp > $now - $window;
+			}));
+
+			if (count($timestamps) >= $maximumRequests) {
+				return true;
+			}
+
+			$timestamps[] = $now;
+			$cacheEntries[$cacheId] = $timestamps;
+		}
+
+		foreach ($cacheEntries as $cacheId => $timestamps) {
+			$cache->store($timestamps, $cacheId, 'mod_wedal_joomla_callback');
+		}
+
+		return false;
+	}
+
+	// Формирует единый ответ при срабатывании антиспам-защиты.
+	private function getSpamProtectionResponse()
+	{
+		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION_ERROR'), 'error' => 1));
+	}
+
 	/**
 	 * Прикрепляет файл к сообщению или письму
 	 *
@@ -469,6 +554,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 	}
 
+	// Сверяет расширение и MIME-тип файла с разрешёнными форматами.
 	public function isValidFileType($file_ext, $filetype, $accept) {
 
 		if (!$accept || !is_string($filetype)) {
@@ -515,6 +601,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return false;
 	}
 
+	// Отправляет уведомление о заявке через SMS.ru.
 	public function sendSMS($form) {
 		if (!$form->params->get('sms_api_key') || !$form->params->get('sms_recipient_number')) {
 			return false;
@@ -574,6 +661,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return $return_message;
 	}
 
+	// Отправляет уведомление и вложения в Telegram.
 	public function sendTelegram($form, $attached_files) {
 		if (!$form->params->get('telegram_api_key') || !$form->params->get('telegram_chat_id')) {
 			return false;
