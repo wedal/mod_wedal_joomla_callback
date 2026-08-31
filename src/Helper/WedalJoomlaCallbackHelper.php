@@ -108,7 +108,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');
-			$form_field->filter = 'raw';
+			$form_field->filter = 'STRING';
 
 			if ($this->params->get('shownamereq', ''))
 			{
@@ -266,7 +266,16 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		$moduleId = $this->app->input->get('modid', null, 'int');
-		$page_url = urldecode($this->app->input->get('page', null, 'STRING'));
+		$pageUrl = rawurldecode((string) $this->app->input->get('page', '', 'RAW'));
+		$page_url = null;
+
+		if (strlen($pageUrl) <= 2048 && filter_var($pageUrl, FILTER_VALIDATE_URL)) {
+			$pageScheme = parse_url($pageUrl, PHP_URL_SCHEME);
+
+			if (in_array(strtolower((string) $pageScheme), array('http', 'https'), true)) {
+				$page_url = $pageUrl;
+			}
+		}
 
 		$form = new WedalJoomlaCallbackHelper;
 		$form->getForm($moduleId);
@@ -307,7 +316,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		ob_start();
-		htmlspecialchars(require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message'), ENT_QUOTES);
+		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message');
 		$body = ob_get_contents();
 		ob_end_clean();
 
