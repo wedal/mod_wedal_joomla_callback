@@ -161,6 +161,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
 			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
 			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL_ERROR');
+			$form_field->validate = 'email';
 
 			if ($this->params->get('showemailreq', ''))
 			{
@@ -384,10 +385,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->mailer = Factory::getMailer();
 		$this->mailer->setSender($from);
 
-		if (!empty($form->values['email'])) {
-			$this->mailer->addReplyTo($form->values['email']);
-		}
-
 		$this->mailer->addRecipient($to);
 
 		if ($form->params->get('email_additional', '')) {
@@ -404,6 +401,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$attached_files = array();
 
 		try {
+			if (!empty($form->values['email'])) {
+				$this->mailer->addReplyTo($form->values['email']);
+			}
+
 			//Отправка СМС
 			if ($form->params->get('enable_sms')) {
 				$sms_status = $this->sendSMS($form);
