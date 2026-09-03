@@ -1,7 +1,7 @@
 <?php
 namespace Joomla\Module\WedalJoomlaCallback\Site\Dispatcher;
 
-\defined('JPATH_PLATFORM') or die;
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
@@ -45,7 +45,7 @@ class Dispatcher extends AbstractModuleDispatcher
 		$data = parent::getLayoutData();
 
 		$data['form'] = $this->moduleExtension->getHelper('WedalJoomlaCallbackHelper');
-		if (!$data['form']->getForm($data['module']->id)) {
+		if (!$data['form']->getForm($data['module'])) {
 			throw new \RuntimeException('The requested callback module is unavailable.', 404);
 		}
 

@@ -45,7 +45,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->app = Factory::getApplication();
 
 		//Параметры для JS
-		$js_params['itemid'] = $this->app->input->get('Itemid', null, 'int');
+		$js_params['itemid'] = $this->app->getInput()->get('Itemid', null, 'int');
 
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
 	}
@@ -53,13 +53,18 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Загружает параметры модуля и формирует поля формы.
 	public function getForm($moduleid, $startFormTimer = true)
 	{
-		if (is_array($moduleid)) {
-			$this->moduleid = $this->app->input->get('modid', null, 'int');
+		if ($moduleid instanceof \stdClass) {
+			$this->moduleid = (int) ($moduleid->id ?? 0);
+			$module = ($moduleid->module ?? null) === 'mod_wedal_joomla_callback' ? $moduleid : null;
 		} else {
-			$this->moduleid = (int) $moduleid;
-		}
+			if (is_array($moduleid)) {
+				$this->moduleid = $this->app->getInput()->get('modid', null, 'int');
+			} else {
+				$this->moduleid = (int) $moduleid;
+			}
 
-		$module = $this->getAccessibleModule($this->moduleid);
+			$module = $this->getAccessibleModule($this->moduleid);
+		}
 
 		if ($module === null) {
 			return false;
@@ -75,7 +80,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
 
 		$this->moduletype = $this->params->get('moduletype', 0);
-		$this->itemid = $this->app->input->get('Itemid', null, 'int');
+		$this->itemid = $this->app->getInput()->get('Itemid', null, 'int');
 
 		$this->buttontext = $this->params->get('buttontext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_BUTTONTEXT_DEFAULT'));
 		$this->thankyoutext = $this->params->get('thankyoutext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT'));
@@ -108,10 +113,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		if (
 			!is_object($module)
+			|| (int) ($module->id ?? 0) !== $moduleId
 			|| $module->module !== 'mod_wedal_joomla_callback'
-			|| (int) $module->published !== 1
-			|| (int) $module->client_id !== 0
-			|| !in_array((int) $module->access, $this->app->getIdentity()->getAuthorisedViewLevels(), true)
 		) {
 			return null;
 		}
@@ -306,13 +309,15 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	}
 
 	// Возвращает разметку всплывающей формы для AJAX-запроса.
+	// Вызывается с format=raw, поэтому ответ должен быть обычным текстом/HTML, а не JsonResponse.
 	public function getFormAjax()
 	{
-		$moduleId = Factory::getApplication()->input->get('modid', null, 'int');
+		$moduleId = Factory::getApplication()->getInput()->get('modid', null, 'int');
 
 		$form = new WedalJoomlaCallbackHelper;
 		if (!$form->getForm($moduleId)) {
-			return $this->getInvalidModuleResponse();
+			echo htmlspecialchars(Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), ENT_QUOTES, 'UTF-8');
+			return false;
 		}
 
 		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_popupform');
@@ -328,8 +333,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			return true;
 		}
 
-		$moduleId = $this->app->input->get('modid', null, 'int');
-		$pageUrl = rawurldecode((string) $this->app->input->get('page', '', 'RAW'));
+		$moduleId = $this->app->getInput()->get('modid', null, 'int');
+		$pageUrl = rawurldecode((string) $this->app->getInput()->get('page', '', 'RAW'));
 		$page_url = null;
 
 		if (strlen($pageUrl) <= 2048 && filter_var($pageUrl, FILTER_VALIDATE_URL)) {
@@ -345,7 +350,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			return $this->getInvalidModuleResponse();
 		}
 
-		$data = $this->app->input->post->getArray();
+		$data = $this->app->getInput()->post->getArray();
 
 		if ($form->params->get('enable_antispam', 1)) {
 			if (!empty($data['wjcallback_website']) || !$this->hasMinimumFillTime($moduleId, $form->params)) {
@@ -501,7 +506,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$window = max(60, min(86400, (int) $params->get('rate_limit_window', 3600)));
 		$now = time();
 		$sessionId = (string) $this->app->getSession()->getId();
-		$ipAddress = (string) $this->app->input->server->getString('REMOTE_ADDR', 'unknown');
+		$ipAddress = (string) $this->app->getInput()->server->getString('REMOTE_ADDR', 'unknown');
 		$cache = Factory::getCache('mod_wedal_joomla_callback', 'callback');
 		$keys = array(
 			'module:' . $moduleId,
@@ -556,7 +561,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	 */
 	public function attach_file($file_field_name, $form, $attach_to_mail) {
 
-		$files = $this->app->input->files->get($file_field_name);
+		$files = $this->app->getInput()->files->get($file_field_name);
 
 		$tmpPath = $this->app->get('tmp_path');
 
@@ -749,7 +754,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$tg_message .= $form->form->getFieldAttribute($key, 'label') . ': ' . $value . "\n";
 		}
 
-		$page_url = urldecode($this->app->input->get('page', null, 'STRING'));
+		$page_url = urldecode($this->app->getInput()->get('page', null, 'STRING'));
 
 		if (!empty($page_url)) {
 			$tg_message .= "\n" . Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL'). "\n" . $page_url;
