@@ -133,7 +133,14 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$form_params->class = $form_params->name;
 
 		foreach ($form_params as $key => $value) {
-			$note->addAttribute($key, $value);
+			// SimpleXMLElement приводит true к "1", а Joomla считает поле обязательным
+			// только при required="true" или required="required" (FormField::validate()).
+			// Поэтому булевы значения атрибутов нормализуем в строки.
+			if (is_bool($value)) {
+				$value = $value ? 'true' : 'false';
+			}
+
+			$note->addAttribute($key, (string) $value);
 		}
 
 		$this->form->setField($note, null, true, $fieldset);
