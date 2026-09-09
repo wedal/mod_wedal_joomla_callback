@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    let module_options = Joomla.getOptions('wedal_joomla_callback');
     let ya_counter = null;
     if (typeof ym !== 'undefined') {
         ya_counter = ym['a'][0][0];
     }
+
+    document.querySelectorAll('.wjcallbackform.embeddedform').forEach((container) => {
+        wjcallback_request_form_state(container);
+    });
 
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.wjcallback-link')) {
@@ -27,13 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let loader = document.getElementById('wjcallback-loader');
         let wjcmodal = document.getElementById('wjcallback-modal');
         let module_id = event.target.closest('.wjcallback-link').getAttribute('data-id');
-        let itemid = '';
 
-        if (module_options['itemid']) {
-            itemid = '&Itemid=' + module_options['itemid'];
-        }
-
-        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid=' + module_id + itemid;
+        let url = wjcallback_ajax_url('getForm', 'raw', module_id);
 
         fetch(url)
             .then(response => response.text())
@@ -61,14 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         event.preventDefault();
 
-        let module_id = event.target.closest(".wjcallbackform").getAttribute('data-id');
-        let itemid = '';
-        if (module_options['itemid']) {
-            itemid = '&Itemid=' + module_options['itemid'];
-        }
-
-        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid=' + module_id + itemid + '&page=' + encodeURIComponent(window.location.href);
-        let formdata = new FormData(event.target.closest('form'));
+        let container = event.target.closest('.wjcallbackform');
+        let module_id = container.getAttribute('data-id');
+        let url = wjcallback_ajax_url('sendForm', 'json', module_id) + '&page=' + encodeURIComponent(window.location.href);
 
         if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeSubmit', {detail: event.target, cancelable: true}))) {
             return;
@@ -80,10 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let loader = document.getElementById('wjcallback-loader');
 
-        fetch(url, {
+        Promise.resolve(container.wjcallback_state)
+        .then(() => fetch(url, {
             method: 'POST',
-            body: formdata
-        })
+            body: new FormData(event.target.closest('form'))
+        }))
         .then(response => response.text())
         .then((response) => {
             loader.remove();
@@ -132,6 +126,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
+function wjcallback_ajax_url(method, format, module_id) {
+    let options = Joomla.getOptions('wedal_joomla_callback');
+    let itemid = options && options['itemid'] ? '&Itemid=' + options['itemid'] : '';
+
+    return '/index.php?option=com_ajax&module=wedal_joomla_callback&format=' + format + '&method=' + method + '&modid=' + module_id + itemid;
+}
+
+function wjcallback_request_form_state(container) {
+    container.wjcallback_state = fetch(wjcallback_ajax_url('getFormState', 'json', container.getAttribute('data-id')))
+        .then(response => response.text())
+        .then((response) => {
+            let state = wjcallback_parse_response(response);
+
+            return state && state.token ? wjcallback_set_token(container, state.token) : false;
+        })
+        .catch(() => false);
+
+    return container.wjcallback_state;
+}
+
+function wjcallback_set_token(container, name) {
+    let form = container.querySelector('form');
+
+    if (!form) {
+        return false;
+    }
+
+    let field = form.querySelector('input.wjcallback-token');
+
+    if (!field) {
+        field = document.createElement('input');
+        field.type = 'hidden';
+        field.className = 'wjcallback-token';
+        form.append(field);
+    }
+
+    field.name = name;
+    field.value = '1';
+
+    return true;
+}
 
 function wjcallback_parse_response(response) {
     let parsed;

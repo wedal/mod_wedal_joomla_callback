@@ -78,8 +78,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->params = new Registry;
 		$this->params->loadString($module->params);
 		if ($startFormTimer) {
-			$this->formStartedAt = time();
-			$this->app->getSession()->set('wjcallback.form_started.' . $this->moduleid, $this->formStartedAt);
+			$this->startFormTimer($this->moduleid);
 		}
 
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
@@ -363,6 +362,23 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return false;
 	}
 
+	/** Отдаёт живое состояние формы: токен сессии и метку начала заполнения. Встроенная форма попадает в кэш страниц Joomla вместе с разметкой: токен там принадлежит чужой сессии, а метка в сессии не создаётся вовсе, потому что модуль не рендерится. Поэтому и то и другое выдаётся отдельным запросом, минующим кэш, так же, как их получает всплывающая форма в getFormAjax().
+	 */
+	public function getFormStateAjax()
+	{
+		$moduleId = (int) $this->app->getInput()->get('modid', null, 'int');
+
+		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
+
+		if ($this->getAccessibleModule($moduleId) === null) {
+			return $this->getInvalidModuleResponse();
+		}
+
+		$this->startFormTimer($moduleId);
+
+		return new JsonResponse(Array('token' => Session::getFormToken(), 'error' => 0));
+	}
+
 	// Проверяет и отправляет заявку, полученную через AJAX.
 	public function sendFormAjax()
 	{
@@ -548,6 +564,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	private function getInvalidModuleResponse()
 	{
 		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
+	}
+
+	// Отмечает в сессии момент, с которого посетитель видит форму.
+	private function startFormTimer($moduleId)
+	{
+		$this->formStartedAt = time();
+		$this->app->getSession()->set('wjcallback.form_started.' . $moduleId, $this->formStartedAt);
 	}
 
 	// Проверяет, что пользователь заполнял форму не слишком быстро.

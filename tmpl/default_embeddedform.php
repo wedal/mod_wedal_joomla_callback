@@ -13,7 +13,6 @@
 
 defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 ?>
 
@@ -47,7 +46,7 @@ use Joomla\CMS\Language\Text;
     		</div>
 
     		<div class="modal-footer">
-                <?php echo HTMLHelper::_('form.token'); ?>
+                <?php //Токен не выводится: страница может отдаваться из кэша. Его подставляет wjcallback.js живым запросом. ?>
                 <button class="btn <?php echo $form->params->get('submit_suffix') ?>" type="submit"><?php echo $form->params->get('send_buttontext', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SEND")) ?></button>
     		</div>
 
