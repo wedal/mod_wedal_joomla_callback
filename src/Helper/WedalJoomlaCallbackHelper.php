@@ -514,7 +514,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
 			if ($form->params->get('enable_telegram')) {
-				if (!$this->sendTelegram($form, $attached_files)) {
+				if (!$this->sendTelegram($form, $attached_files, $page_url)) {
 					return $this->getDeliveryErrorResponse();
 				}
 			}
@@ -844,45 +844,26 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	}
 
 	// Отправляет уведомление и вложения в Telegram.
-	public function sendTelegram($form, $attached_files) {
+	public function sendTelegram($form, $attached_files, $page_url = null) {
 		if (!$form->params->get('telegram_api_key') || !$form->params->get('telegram_chat_id')) {
 			return false;
-		}
-
-		//Формируем Telegram-сообщение
-		$tg_message = '';
-
-		if ($form->params->get('telegram_introtext')) {
-			$tg_message .= $form->params->get('telegram_introtext') . "\n\n";
-		}
-
-		foreach ($form->values as $key => $value) {
-			if (is_array($value)) {
-				$value = implode(', ', $value);
-			}
-
-			$tg_message .= $form->form->getFieldAttribute($key, 'label') . ': ' . $value . "\n";
-		}
-
-		$page_url = urldecode($this->app->getInput()->get('page', null, 'STRING'));
-
-		if (!empty($page_url)) {
-			$tg_message .= "\n" . Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL'). "\n" . $page_url;
 		}
 
 		//Отправка запроса
 		$tg_query = array(
 			"chat_id" 	=> $form->params->get('telegram_chat_id'),
-			"text"  	=> $tg_message,
+			"text"  	=> $this->buildTelegramMessage($form, $page_url),
 			"parse_mode" => "html",
 		);
 
-		$ch = curl_init("https://api.telegram.org/bot". $form->params->get('telegram_api_key') ."/sendMessage?" . http_build_query($tg_query));
+		$ch = curl_init("https://api.telegram.org/bot". $form->params->get('telegram_api_key') ."/sendMessage");
 
 		if ($ch === false) {
 			return false;
 		}
 
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tg_query));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
@@ -934,6 +915,36 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		unset($ch);
 
 		return $this->isSuccessfulTelegramResponse($res, $httpCode);
+	}
+
+	// Собирает текст уведомления для Telegram. 
+	private function buildTelegramMessage($form, $page_url = null)
+	{
+		$tg_message = '';
+
+		if ($form->params->get('telegram_introtext')) {
+			$tg_message .= $this->escapeTelegramHtml($form->params->get('telegram_introtext')) . "\n\n";
+		}
+
+		foreach ($form->values as $key => $value) {
+			if (is_array($value)) {
+				$value = implode(', ', $value);
+			}
+
+			$tg_message .= $this->escapeTelegramHtml($form->form->getFieldAttribute($key, 'label')) . ': ' . $this->escapeTelegramHtml($value) . "\n";
+		}
+
+		if (!empty($page_url)) {
+			$tg_message .= "\n" . $this->escapeTelegramHtml(Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL')) . "\n" . $this->escapeTelegramHtml($page_url);
+		}
+
+		return $tg_message;
+	}
+
+	// Экранирует значение для сообщения Telegram с parse_mode=html.
+	private function escapeTelegramHtml($value)
+	{
+		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
 	// Проверяет транспортный и API-результат Telegram, не раскрывая ответ пользователю.
