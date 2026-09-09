@@ -7,6 +7,7 @@ use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Response\JsonResponse;
@@ -146,6 +147,28 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->form->setField($note, null, true, $fieldset);
 	}
 
+	// Возвращает CAPTCHA-плагин модуля, если он выбран и включён.
+	private function getCaptchaPlugin()
+	{
+		$plugin = trim((string) $this->params->get('captcha', '0'));
+
+		if ($plugin === '' || $plugin === '0') {
+			return '';
+		}
+
+		if (!PluginHelper::isEnabled('captcha', $plugin)) {
+			Log::add(
+				sprintf('The CAPTCHA plugin "%s" selected in the module is not enabled, the field was skipped.', $plugin),
+				Log::WARNING,
+				'mod_wedal_joomla_callback'
+			);
+
+			return '';
+		}
+
+		return $plugin;
+	}
+
 	//Создает базовые поля модуля согласно настройкам в нем
 	public function createFields(){
 
@@ -243,11 +266,16 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		//Дополнительные поля
 		$customfields = $this->createCustomFields();
 
-		if ($this->params->get('captcha', '0') !== '0') {
+		$captchaPlugin = $this->getCaptchaPlugin();
+
+		if ($captchaPlugin !== '') {
 			$form_field = new \stdClass();
 			$form_field->name = 'captcha';
 			$form_field->type = 'captcha';
-			$form_field->captcha = $this->params->get('captcha');
+			$form_field->plugin = $captchaPlugin;
+			// Своё пространство имён на экземпляр модуля, чтобы виджеты нескольких форм
+			// на одной странице не конфликтовали.
+			$form_field->namespace = 'wjcallback' . $this->moduleid;
 			$form_field->validate = 'captcha';
 			$form_field->required = true;
 			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA');
