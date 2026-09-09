@@ -13,6 +13,7 @@ use Joomla\CMS\Log\Log;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Language\Text;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\Registry\Registry;
@@ -51,6 +52,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		//Параметры для JS
 		$js_params['itemid'] = $this->app->getInput()->get('Itemid', null, 'int');
+		$js_params['baseurl'] = Uri::root(true);
 
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
 	}

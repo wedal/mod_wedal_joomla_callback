@@ -133,8 +133,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function wjcallback_ajax_url(method, format, module_id) {
     let options = Joomla.getOptions('wedal_joomla_callback');
     let itemid = options && options['itemid'] ? '&Itemid=' + options['itemid'] : '';
+    let base = wjcallback_base_url();
 
-    return '/index.php?option=com_ajax&module=wedal_joomla_callback&format=' + format + '&method=' + method + '&modid=' + module_id + itemid;
+    return base + '/index.php?option=com_ajax&module=wedal_joomla_callback&format=' + format + '&method=' + method + '&modid=' + module_id + itemid;
+}
+
+function wjcallback_base_url() {
+    let options = Joomla.getOptions('wedal_joomla_callback');
+
+    if (options && typeof options['baseurl'] === 'string') {
+        return options['baseurl'].replace(/\/+$/, '');
+    }
+
+    let paths = Joomla.getOptions('system.paths');
+
+    return paths && typeof paths['root'] === 'string' ? paths['root'].replace(/\/+$/, '') : '';
 }
 
 function wjcallback_request_form_state(container) {
