@@ -7,6 +7,7 @@ use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
 use Joomla\CMS\Extension\ModuleInterface;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\Input\Input;
 
 /**
@@ -52,6 +53,8 @@ class Dispatcher extends AbstractModuleDispatcher
 		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
 		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
 		$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
+
+		Text::script('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
 
 		if ($data['params']->get('showphonemask')) {
 			$wa->registerAndUseScript('maska', 'mod_wedal_joomla_callback/maska.js', [] ,['defer ' => true]);

@@ -367,9 +367,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	public function sendFormAjax()
 	{
 		//Check token
-		if (!Session::checkToken()) {
-			echo json_encode(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
-			return true;
+		if (!$this->hasValidToken()) {
+			return $this->getInvalidTokenResponse();
 		}
 
 		$moduleId = $this->app->getInput()->get('modid', null, 'int');
@@ -521,6 +520,28 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+	}
+
+	// Повторяет проверку Session::checkToken(), но без редиректа.
+	// При новой сессии checkToken() уводит запрос на index.php: fetch идёт по редиректу
+	// и получает HTML главной страницы вместо JSON, после чего разбор ответа на клиенте падает.
+	private function hasValidToken()
+	{
+		$token = Session::getFormToken();
+		$input = $this->app->getInput();
+
+		if ($input->post->get($token, '', 'alnum')) {
+			return true;
+		}
+
+		return $input->server->get('HTTP_X_CSRF_TOKEN', '', 'alnum') === $token;
+	}
+
+	// Возвращает ответ об истёкшем токене в том же виде, что и остальные ветки sendFormAjax().
+	// Собственный echo склеивался с ответом com_ajax в два JSON-документа подряд, и клиент не мог их разобрать.
+	private function getInvalidTokenResponse()
+	{
+		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
 	}
 
 	// Возвращает нейтральный ответ, не раскрывая конфигурацию недоступного модуля.

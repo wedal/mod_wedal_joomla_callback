@@ -87,20 +87,35 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.text())
         .then((response) => {
             loader.remove();
-            let responce_obj = JSON.parse(response);
 
-            if (!responce_obj.data.data.error) {
+            let result = wjcallback_parse_response(response);
+
+            if (!result) {
+                alert(wjcallback_delivery_error());
+                return;
+            }
+
+            if (!result.error) {
                 document.dispatchEvent(new CustomEvent('wjcOnFormAfterSubmit', {detail: event.target}));
 
                 event.target.closest('form').querySelector('.modal-footer').style.display = 'none';
-                event.target.closest('form').querySelector('.modal-body').innerHTML = responce_obj.data.data.message;
+                event.target.closest('form').querySelector('.modal-body').innerHTML = result.message;
 
                 if (ya_counter && event.target.closest('form').getAttribute('data-ym-aimid')) {
                     ym(ya_counter, 'reachGoal', event.target.closest('form').getAttribute('data-ym-aimid'));
                 }
             } else {
-                alert(responce_obj.data.data.message);
+                alert(result.message || wjcallback_delivery_error());
             }
+         })
+        .catch(() => {
+            let leftover_loader = document.getElementById('wjcallback-loader');
+
+            if (leftover_loader) {
+                leftover_loader.remove();
+            }
+
+            alert(wjcallback_delivery_error());
          });
     });
 
@@ -116,6 +131,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+function wjcallback_parse_response(response) {
+    let parsed;
+
+    try {
+        parsed = JSON.parse(response);
+    } catch (e) {
+        return null;
+    }
+
+    let payload = parsed && parsed.data ? parsed.data.data : null;
+
+    return payload && typeof payload === 'object' ? payload : null;
+}
+
+function wjcallback_delivery_error() {
+    return Joomla.Text._('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
+}
 
 function wjcmodal_remove(wjcmodal) {
 
