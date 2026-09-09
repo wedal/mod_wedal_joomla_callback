@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.wjcallbackform.embeddedform').forEach((container) => {
         wjcallback_request_form_state(container);
+        wjcallback_apply_phonemask(container);
     });
 
     document.addEventListener('click', (event) => {
@@ -44,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 wjcmodal.classList.add('show');
 
                 executeScriptElements(wjcmodal);
+
+                wjcallback_apply_phonemask(wjcmodal.querySelector('.wjcallbackform'));
 
                 wjcmodal.querySelector('.modal-header .close').addEventListener('click', (event) => {
                    wjcmodal_remove(wjcmodal);
@@ -145,6 +148,23 @@ function wjcallback_request_form_state(container) {
         .catch(() => false);
 
     return container.wjcallback_state;
+}
+
+function wjcallback_apply_phonemask(container) {
+    if (!container || typeof Maska === 'undefined') {
+        return false;
+    }
+
+    let mask = container.getAttribute('data-phonemask');
+    let input = mask ? container.querySelector('#phone') : null;
+
+    if (!input) {
+        return false;
+    }
+
+    Maska.create(input, {mask: mask});
+
+    return true;
 }
 
 function wjcallback_set_token(container, name) {

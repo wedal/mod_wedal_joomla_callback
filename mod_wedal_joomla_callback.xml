@@ -58,6 +58,7 @@
 
 				<field
 					name="buttontext"
+					filter="safehtml"
 					showon="moduletype:0[AND]hideformbutton:0"
 					type="text"
 					default=""
@@ -68,6 +69,7 @@
 
 				<field
 						name="send_buttontext"
+						filter="safehtml"
 						type="text"
 						default=""
 						hint="MOD_WEDAL_JOOMLA_CALLBACK_SEND"
@@ -117,6 +119,7 @@
 
 				<field
 					name="formtitle"
+					filter="safehtml"
 					type="text" default=""
 					showon="showformtitle:1"
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_TITLE"

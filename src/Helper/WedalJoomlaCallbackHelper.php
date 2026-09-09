@@ -55,6 +55,12 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
 	}
 
+	// Экранирует значение для вывода в HTML-атрибут шаблона.
+	public static function escapeAttribute($value)
+	{
+		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+	}
+
 	// Загружает параметры модуля и формирует поля формы.
 	public function getForm($moduleid, $startFormTimer = true)
 	{
