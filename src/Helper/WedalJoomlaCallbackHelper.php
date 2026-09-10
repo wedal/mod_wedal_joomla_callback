@@ -467,25 +467,32 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$from = array($this->app->get('mailfrom') , $this->app->get('fromname') );
 		$subject = $mailtitle;
 
-		$this->mailer = Factory::getMailer();
-		$this->mailer->setSender($from);
-
-		$this->mailer->addRecipient($to);
-
-		if ($form->params->get('email_additional', '')) {
-			$additional_recipients = preg_split('/\r\n|[\r\n]/', $form->params->get('email_additional', ''));
-
-			foreach ($additional_recipients as $additional_recipient) {
-				if (MailHelper::isEmailAddress($additional_recipient)) {
-					$this->mailer->addRecipient($additional_recipient);
-				}
-			}
-		}
-
 		// Проверяем, есть ли среди дополнительных полей поля типа file и, если таковые имеются, прикрепляем выбранные файлы как вложения к письму
 		$attached_files = array();
 
 		try {
+
+			if (!MailHelper::isEmailAddress($to)) {
+				Log::add('The recipient address is not a valid email address.', Log::ERROR, 'mod_wedal_joomla_callback');
+
+				return $this->getDeliveryErrorResponse();
+			}
+
+			$this->mailer = Factory::getMailer();
+			$this->mailer->setSender($from);
+
+			$this->mailer->addRecipient($to);
+
+			if ($form->params->get('email_additional', '')) {
+				$additional_recipients = preg_split('/\r\n|[\r\n]/', $form->params->get('email_additional', ''));
+
+				foreach ($additional_recipients as $additional_recipient) {
+					if (MailHelper::isEmailAddress($additional_recipient)) {
+						$this->mailer->addRecipient($additional_recipient);
+					}
+				}
+			}
+
 			if (!empty($form->values['email'])) {
 				$this->mailer->addReplyTo($form->values['email']);
 			}
