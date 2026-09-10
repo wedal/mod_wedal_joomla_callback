@@ -43,6 +43,9 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		'xlsx' => array('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'),
 	);
 
+	// Правило accept по умолчанию: совпадает со значением настройки attachmentformat в манифесте и покрывает белый список SAFE_ATTACHMENT_TYPES целиком. Пустое правило означает именно его, а не отказ во вложении.
+	private const DEFAULT_ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
+
 	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
 	private const RATE_LIMIT_MODULE_FACTOR = 20;
 
@@ -690,79 +693,130 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	}
 
 	/**
-	 * Прикрепляет файл к сообщению или письму
+	 * Прикрепляет файлы поля к сообщению или письму
 	 *
-	 * @param   string   $file_field_name  	Имя файла вложения.
+	 * @param   string   $file_field_name  	Имя поля вложения.
 	 * @param   mixed    $form    			Объект формы
-	 * @param   bool  	$attach_to_mail     Прикреплять ли файл к письму
+	 * @param   bool  	$attach_to_mail     Прикреплять ли файлы к письму
 	 *
-	 * @return  boolean	True on success.
+	 * @return  array	Принятые файлы: к каждому добавлены stored_name и mime_type.
 	 */
 	public function attach_file($file_field_name, $form, $attach_to_mail) {
 
-		$files = $this->app->getInput()->files->get($file_field_name);
+		$files = $this->normalizeUploadedFiles($this->app->getInput()->files->get($file_field_name));
+
+		if (empty($files)) {
+			return array();
+		}
 
 		$tmpPath = $this->app->get('tmp_path');
+		$accept = $this->getAcceptRule($file_field_name, $form);
+		$returned_files = array();
 
-		if ((!$form->params->get('allow_multi_attachment', '') && $file_field_name == 'attachments') || $file_field_name != 'attachments') {
-			$files_tmp = $files;
-			unset($files);
-			$files = array();
-			$files[0] = $files_tmp;
-		}
-
-		if (!empty($files[0]['name']))
+		foreach ($files as $key => $file)
 		{
-			$returned_files = array();
-
-			foreach ($files as $key => $file)
-			{
-				if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-					continue;
-				}
-
-				$fileExt = strtolower(File::getExt($file['name']));
-				$mimeType = false;
-				$finfo = new \finfo(FILEINFO_MIME_TYPE);
-
-				if ($finfo) {
-					$mimeType = $finfo->file($file['tmp_name']);
-				}
-
-				$customAccept = $form->form->getField($file_field_name)->getAttribute('accept');
-				$attachmentAccept = trim((string) $form->params->get('attachmentformat', ''));
-				
-				if ($file_field_name === 'attachments') {
-					if (!empty($attachmentAccept)) {
-						$accept = $attachmentAccept;
-					} else {
-						$accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
-					}
-				} else {
-					$accept = $customAccept;
-				}
-
-
-				if (!$this->isValidFileType($fileExt, $mimeType, $accept)) {
-					continue;
-				}
-
-				$storedName = bin2hex(random_bytes(16)) . '.' . $fileExt;
-				$dest = $tmpPath . '/' . $storedName;
-
-				if (File::upload($file['tmp_name'], $dest)) {
-					$file['stored_name'] = $storedName;
-					$file['mime_type'] = $mimeType;
-					$returned_files[$key] = $file;
-
-					if ($attach_to_mail) {
-						$this->mailer->addAttachment($dest, File::makeSafe($file['name']));
-					}
-				}
+			if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+				continue;
 			}
-			return $returned_files;
+
+			$fileExt = strtolower(File::getExt($file['name']));
+			$mimeType = false;
+			$finfo = new \finfo(FILEINFO_MIME_TYPE);
+
+			if ($finfo) {
+				$mimeType = $finfo->file($file['tmp_name']);
+			}
+
+			if (!$this->isValidFileType($fileExt, $mimeType, $accept)) {
+				$this->logDroppedAttachment($file_field_name, $fileExt, $mimeType, 'the type is not allowed');
+
+				continue;
+			}
+
+			$storedName = bin2hex(random_bytes(16)) . '.' . $fileExt;
+			$dest = $tmpPath . '/' . $storedName;
+
+			if (File::upload($file['tmp_name'], $dest)) {
+				$file['stored_name'] = $storedName;
+				$file['mime_type'] = $mimeType;
+				$returned_files[$key] = $file;
+
+				if ($attach_to_mail) {
+					$this->mailer->addAttachment($dest, File::makeSafe($file['name']));
+				}
+			} else {
+				$this->logDroppedAttachment($file_field_name, $fileExt, $mimeType, 'the file could not be written to tmp_path');
+			}
 		}
 
+		return $returned_files;
+	}
+
+	/** Приводит вложения поля к списку файлов.
+	 * @param   mixed  $files  Значение поля из Files::get().
+	 *
+	 * @return  array  Список файлов, у каждого непустое имя.
+	 */
+	private function normalizeUploadedFiles($files)
+	{
+		if (!is_array($files) || $files === array()) {
+			return array();
+		}
+
+		if (array_key_exists('tmp_name', $files) && !is_array($files['tmp_name'])) {
+			$files = array($files);
+		}
+
+		$normalized = array();
+
+		foreach ($files as $key => $file) {
+			if (is_array($file) && !empty($file['name']) && !is_array($file['name'])) {
+				$normalized[$key] = $file;
+			}
+		}
+
+		return $normalized;
+	}
+
+	/** Возвращает правило accept для поля вложения.
+	 *
+	 * @param   string  $file_field_name  Имя поля вложения.
+	 * @param   mixed   $form             Объект формы.
+	 *
+	 * @return  string
+	 */
+	private function getAcceptRule($file_field_name, $form)
+	{
+		if ($file_field_name === 'attachments') {
+			$accept = trim((string) $form->params->get('attachmentformat', ''));
+		} else {
+			$field = $form->form->getField($file_field_name);
+			$accept = $field ? trim((string) $field->getAttribute('accept')) : '';
+		}
+
+		return $accept === '' ? self::DEFAULT_ATTACHMENT_ACCEPT : $accept;
+	}
+
+	// Записывает причину, по которой вложение не ушло. 
+	private function logDroppedAttachment($file_field_name, $fileExt, $mimeType, $reason)
+	{
+		Log::add(
+			sprintf(
+				'The attachment from the field "%s" was dropped: %s (extension "%s", detected type "%s").',
+				$this->forLog($file_field_name, '/^[a-z0-9_\-]{1,64}$/i'),
+				$reason,
+				$this->forLog($fileExt, '/^[a-z0-9]{1,10}$/i'),
+				$this->forLog($mimeType, '#^[a-z0-9.+\-]+/[a-z0-9.+\-]+$#i')
+			),
+			Log::WARNING,
+			'mod_wedal_joomla_callback'
+		);
+	}
+
+	// Расширение файла приходит из его имени, то есть от посетителя. В журнал попадает только значение подходящей формы: остальное — 'unknown', иначе строку журнала можно было бы разорвать переводом строки и подделать в ней запись любого уровня.
+	private function forLog($value, $pattern)
+	{
+		return is_string($value) && preg_match($pattern, $value) ? strtolower($value) : 'unknown';
 	}
 
 	// Сверяет расширение и MIME-тип файла с разрешёнными форматами.
