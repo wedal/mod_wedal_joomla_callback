@@ -55,6 +55,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
 	private const RATE_LIMIT_MODULE_FACTOR = 20;
 
+	// Категория и файл журнала модуля.
+	private const LOG_CATEGORY = 'mod_wedal_joomla_callback';
+	private const LOG_FILE = 'mod_wedal_joomla_callback.php';
+
 	// Инициализирует приложение и параметры JavaScript.
 	public function __construct()
 	{
@@ -65,6 +69,19 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$js_params['baseurl'] = Uri::root(true);
 
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
+	}
+
+	/**
+	 * Пишет запись в журнал модуля.
+	 */
+	private function log($message, $priority = Log::WARNING)
+	{
+		try {
+			Log::addLogger(array('text_file' => self::LOG_FILE), Log::ALL, array(self::LOG_CATEGORY));
+			Log::add($message, $priority, self::LOG_CATEGORY);
+		} catch (\Throwable $exception) {
+			// Потерянная запись журнала лучше прерванной заявки.
+		}
 	}
 
 	// Экранирует значение для вывода в HTML-атрибут шаблона.
@@ -174,11 +191,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		if (!PluginHelper::isEnabled('captcha', $plugin)) {
-			Log::add(
-				sprintf('The CAPTCHA plugin "%s" selected in the module is not enabled, the field was skipped.', $plugin),
-				Log::WARNING,
-				'mod_wedal_joomla_callback'
-			);
+			$this->log(sprintf('The CAPTCHA plugin "%s" selected in the module is not enabled, the field was skipped.', $plugin));
 
 			return '';
 		}
@@ -330,7 +343,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 					$tosArticles = $article->getItems();
 
 					if (!isset($tosArticles[0]) || !is_object($tosArticles[0])) {
-						Log::add('The configured Terms of Service article is unavailable.', Log::WARNING, 'mod_wedal_joomla_callback');
+						$this->log('The configured Terms of Service article is unavailable.');
 					} else {
 						$tosArticle = $tosArticles[0];
 						$articleSlug = $tosArticle->id . ':' . $tosArticle->alias;
@@ -338,7 +351,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 						$form_field->label = Text::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $tosLink, $tosLinkText);
 					}
 				} catch (\Throwable $exception) {
-					Log::add('The configured Terms of Service article could not be loaded.', Log::WARNING, 'mod_wedal_joomla_callback');
+					$this->log('The configured Terms of Service article could not be loaded.');
 				}
 			}
 
@@ -375,15 +388,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		if (!$loaded) {
-			Log::add(
-				sprintf(
-					'The custom fields XML of module %d is invalid, the custom fields were skipped: %s',
-					(int) ($this->moduleid ?? 0),
-					$this->firstXmlError($errors)
-				),
-				Log::WARNING,
-				'mod_wedal_joomla_callback'
-			);
+			$this->log(sprintf(
+				'The custom fields XML of module %d is invalid, the custom fields were skipped: %s',
+				(int) ($this->moduleid ?? 0),
+				$this->firstXmlError($errors)
+			));
 
 			return false;
 		}
@@ -516,7 +525,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		try {
 
 			if (!MailHelper::isEmailAddress($to)) {
-				Log::add('The recipient address is not a valid email address.', Log::ERROR, 'mod_wedal_joomla_callback');
+				$this->log('The recipient address is not a valid email address.', Log::ERROR);
 
 				return $this->getDeliveryErrorResponse();
 			}
@@ -584,7 +593,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
 			if ($form->params->get('enable_telegram')) {
 				if (!$this->sendTelegram($form, $attached_files, $page_url)) {
-					Log::add('The Telegram notification was not delivered.', Log::WARNING, 'mod_wedal_joomla_callback');
+					$this->log('The Telegram notification was not delivered.');
 				}
 			}
 		} catch (\Throwable $exception) {
@@ -702,7 +711,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		try {
 			return $this->checkRateLimit($moduleId, $params);
 		} catch (\Throwable $exception) {
-			Log::add('The rate limit storage is unavailable, the check was skipped.', Log::WARNING, 'mod_wedal_joomla_callback');
+			$this->log('The rate limit storage is unavailable, the check was skipped.');
 
 			return false;
 		}
@@ -881,17 +890,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Записывает причину, по которой вложение не ушло. 
 	private function logDroppedAttachment($file_field_name, $fileExt, $mimeType, $reason)
 	{
-		Log::add(
-			sprintf(
-				'The attachment from the field "%s" was dropped: %s (extension "%s", detected type "%s").',
-				$this->forLog($file_field_name, '/^[a-z0-9_\-]{1,64}$/i'),
-				$reason,
-				$this->forLog($fileExt, '/^[a-z0-9]{1,10}$/i'),
-				$this->forLog($mimeType, '#^[a-z0-9.+\-]+/[a-z0-9.+\-]+$#i')
-			),
-			Log::WARNING,
-			'mod_wedal_joomla_callback'
-		);
+		$this->log(sprintf(
+			'The attachment from the field "%s" was dropped: %s (extension "%s", detected type "%s").',
+			$this->forLog($file_field_name, '/^[a-z0-9_\-]{1,64}$/i'),
+			$reason,
+			$this->forLog($fileExt, '/^[a-z0-9]{1,10}$/i'),
+			$this->forLog($mimeType, '#^[a-z0-9.+\-]+/[a-z0-9.+\-]+$#i')
+		));
 	}
 
 	// Расширение файла приходит из его имени, то есть от посетителя. В журнал попадает только значение подходящей формы: остальное — 'unknown', иначе строку журнала можно было бы разорвать переводом строки и подделать в ней запись любого уровня.
