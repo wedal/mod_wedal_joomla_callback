@@ -9,7 +9,7 @@ class SMSRU {
   private $ApiKey;
   private $protocol = 'https';
   private $domain = 'sms.ru';
-  private $count_repeat = 5;    //количество попыток достучаться до сервера если он не доступен
+  private $count_repeat = 1;    //количество попыток достучаться до сервера если он не доступен. Запрос идёт внутри отправки формы: каждая попытка добавляет посетителю ожидания, поэтому она одна.
 
 
   function __construct($ApiKey) {
@@ -235,7 +235,9 @@ class SMSRU {
     }
     $ch = curl_init($url . "?json=1");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    // Пределы ожидания: без CURLOPT_CONNECTTIMEOUT недоступный sms.ru держит отправку формы до max_execution_time.
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);

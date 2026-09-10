@@ -46,6 +46,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Правило accept по умолчанию: совпадает со значением настройки attachmentformat в манифесте и покрывает белый список SAFE_ATTACHMENT_TYPES целиком. Пустое правило означает именно его, а не отказ во вложении.
 	private const DEFAULT_ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
 
+	// Пределы ожидания внешних запросов
+	private const TELEGRAM_CONNECT_TIMEOUT = 5;
+	private const TELEGRAM_TIMEOUT = 10;
+	private const TELEGRAM_UPLOAD_TIMEOUT = 30;
+	private const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
+	private const TELEGRAM_PHOTO_TYPES = array('image/jpeg', 'image/png', 'image/webp');
+
 	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
 	private const RATE_LIMIT_MODULE_FACTOR = 20;
 
@@ -527,7 +534,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
 			if ($form->params->get('enable_telegram')) {
 				if (!$this->sendTelegram($form, $attached_files, $page_url)) {
-					return $this->getDeliveryErrorResponse();
+					Log::add('The Telegram notification was not delivered.', Log::WARNING, 'mod_wedal_joomla_callback');
 				}
 			}
 		} catch (\Throwable $exception) {
@@ -940,24 +947,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			"parse_mode" => "html",
 		);
 
-		$ch = curl_init("https://api.telegram.org/bot". $form->params->get('telegram_api_key') ."/sendMessage");
-
-		if ($ch === false) {
-			return false;
-		}
-
-		curl_setopt($ch, CURLOPT_POST, true);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tg_query));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($ch, CURLOPT_HEADER, false);
-
-		$result = curl_exec($ch);
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		unset($ch);
-
-		if (!$this->isSuccessfulTelegramResponse($result, $httpCode)) {
+		if (!$this->requestTelegram($form, 'sendMessage', http_build_query($tg_query), self::TELEGRAM_TIMEOUT)) {
 			return false;
 		}
 
@@ -966,39 +956,121 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			return true;
 		}
 
-		$tmpPath = $this->app->get('tmp_path');
-		$query_media = array();
+		$delivered = true;
 
-		foreach ($attached_files as $key => $file)
-		{
-			$filename = $file['stored_name'];
-			$dest     = $tmpPath . '/' . $filename;
-			$query_media[$key]['type'] = 'photo';
-			$query_media[$key]['media'] = 'attach://' . $filename;
-			//$query_media[$key]['caption'] = @todo: добавить caption для изображений из label полей
-
-			$tg_query[$filename] = new \CURLFile($dest, $file['mime_type'], File::makeSafe($file['name']));
+		foreach ($this->buildTelegramMediaBatches($attached_files) as $batch) {
+			if (!$this->sendTelegramMediaBatch($form, $batch)) {
+				$delivered = false;
+			}
 		}
 
-		$tg_query['media'] = json_encode($query_media);
+		return $delivered;
+	}
 
-		$ch = curl_init('https://api.telegram.org/bot'. $form->params->get('telegram_api_key') .'/sendMediaGroup');
+	/** Раскладывает вложения по запросам Telegram.
+	 * @param   array  $attached_files  Принятые вложения из attach_file().
+	 *
+	 * @return  array[]  Пачки вида ['type' => 'photo'|'document', 'files' => [...]].
+	 */
+	private function buildTelegramMediaBatches($attached_files)
+	{
+		$groups = array('photo' => array(), 'document' => array());
+
+		foreach ($attached_files as $file) {
+			$groups[$this->getTelegramMediaType($this->getAttachmentMimeType($file))][] = $file;
+		}
+
+		$batches = array();
+
+		foreach ($groups as $type => $files) {
+			foreach (array_chunk($files, self::TELEGRAM_MEDIA_GROUP_LIMIT) as $chunk) {
+				$batches[] = array('type' => $type, 'files' => $chunk);
+			}
+		}
+
+		return $batches;
+	}
+
+	// Тип содержимого определяет finfo при приёме файла.
+	private function getAttachmentMimeType($file)
+	{
+		return isset($file['mime_type']) && is_string($file['mime_type']) && $file['mime_type'] !== ''
+			? $file['mime_type']
+			: 'application/octet-stream';
+	}
+
+	// Фотографией уходит только то, что Telegram точно принимает как изображение. Остальное — документом: так владелец сайта получает файл в исходном виде, а не ошибку доставки.
+	private function getTelegramMediaType($mimeType)
+	{
+		return in_array(strtolower((string) $mimeType), self::TELEGRAM_PHOTO_TYPES, true) ? 'photo' : 'document';
+	}
+
+	/** Отправляет одну пачку вложений.
+	 * @param   WedalJoomlaCallbackHelper  $form   Форма с параметрами модуля.
+	 * @param   array                      $batch  Пачка из buildTelegramMediaBatches().
+	 *
+	 * @return  bool
+	 */
+	private function sendTelegramMediaBatch($form, $batch)
+	{
+		$tmpPath = $this->app->get('tmp_path');
+		$query = array('chat_id' => $form->params->get('telegram_chat_id'));
+		$media = array();
+
+		foreach ($batch['files'] as $file) {
+			$filename = $file['stored_name'];
+			$dest     = $tmpPath . '/' . $filename;
+
+			$query[$filename] = new \CURLFile($dest, $this->getAttachmentMimeType($file), File::makeSafe($file['name']));
+			$media[] = array('type' => $batch['type'], 'media' => 'attach://' . $filename);
+			//@todo: добавить caption для изображений из label полей
+		}
+
+		if (count($media) === 1) {
+			// sendMediaGroup требует не меньше двух элементов, поэтому одиночное вложение уходит своим методом и отдельным полем файла.
+			$filename = $batch['files'][0]['stored_name'];
+			$method = $batch['type'] === 'photo' ? 'sendPhoto' : 'sendDocument';
+			$query[$batch['type']] = $query[$filename];
+			unset($query[$filename]);
+		} else {
+			$method = 'sendMediaGroup';
+			$query['media'] = json_encode($media);
+		}
+
+		return $this->requestTelegram($form, $method, $query, self::TELEGRAM_UPLOAD_TIMEOUT);
+	}
+
+	/** Выполняет запрос к Bot API.
+	 *
+	 * @param   WedalJoomlaCallbackHelper  $form     Форма с параметрами модуля.
+	 * @param   string                     $method   Метод Bot API.
+	 * @param   string|array               $fields   Тело запроса: строка запроса либо массив с CURLFile.
+	 * @param   int                        $timeout  Предел ожидания ответа, секунды.
+	 *
+	 * @return  bool
+	 */
+	private function requestTelegram($form, $method, $fields, $timeout)
+	{
+		$ch = curl_init('https://api.telegram.org/bot' . $form->params->get('telegram_api_key') . '/' . $method);
 
 		if ($ch === false) {
 			return false;
 		}
 
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $tg_query);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($ch, CURLOPT_HEADER, false);
-		$res = curl_exec($ch);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::TELEGRAM_CONNECT_TIMEOUT);
+		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+
+		$result = curl_exec($ch);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		unset($ch);
 
-		return $this->isSuccessfulTelegramResponse($res, $httpCode);
+		return $this->isSuccessfulTelegramResponse($result, $httpCode);
 	}
 
 	// Собирает текст уведомления для Telegram. 
