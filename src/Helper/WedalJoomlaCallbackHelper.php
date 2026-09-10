@@ -10,7 +10,6 @@ use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Mail\MailHelper;
 use Joomla\CMS\Log\Log;
-use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
@@ -440,7 +439,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$this->startFormTimer($moduleId);
 
-		return new JsonResponse(Array('token' => Session::getFormToken(), 'error' => 0));
+		return array('token' => Session::getFormToken(), 'error' => 0);
 	}
 
 	// Проверяет и отправляет заявку, полученную через AJAX.
@@ -487,7 +486,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		if (!$result)
 		{
 			$errors = $form->form->getErrors();
-			return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . json_encode($errors) , 'error' => 0));
+			return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . json_encode($errors) , 'error' => 0);
 		}
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
@@ -606,7 +605,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			}
 		}
 
-		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+		return array('message' => $thankyoutext, 'error' => 0);
 	}
 
 	/** Собирает тело письма по макету *_message.
@@ -648,13 +647,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Собственный echo склеивался с ответом com_ajax в два JSON-документа подряд, и клиент не мог их разобрать.
 	private function getInvalidTokenResponse()
 	{
-		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1));
+		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1);
 	}
 
 	// Возвращает нейтральный ответ, не раскрывая конфигурацию недоступного модуля.
 	private function getInvalidModuleResponse()
 	{
-		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1));
+		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1);
 	}
 
 	// Отмечает в сессии момент, с которого посетитель видит форму.
@@ -742,13 +741,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Формирует единый ответ при срабатывании антиспам-защиты.
 	private function getSpamProtectionResponse()
 	{
-		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION_ERROR'), 'error' => 1));
+		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION_ERROR'), 'error' => 1);
 	}
 
 	// Возвращает нейтральный ответ, не раскрывая детали сбоя доставки.
 	private function getDeliveryErrorResponse()
 	{
-		return new JsonResponse(Array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR'), 'error' => 1));
+		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR'), 'error' => 1);
 	}
 
 	/**

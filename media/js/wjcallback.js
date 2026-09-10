@@ -211,7 +211,7 @@ function wjcallback_parse_response(response) {
         return null;
     }
 
-    let payload = parsed && parsed.data ? parsed.data.data : null;
+    let payload = parsed && typeof parsed === 'object' ? parsed.data : null;
 
     return payload && typeof payload === 'object' ? payload : null;
 }
