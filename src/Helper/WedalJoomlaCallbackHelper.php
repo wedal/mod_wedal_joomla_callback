@@ -360,9 +360,54 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		$custom_xml = '<form><fieldset name="customfields">' .$this->params->get('customfields', ''). '</fieldset></form>';
-		$this->form->load($custom_xml);
+
+		$previousUseErrors = libxml_use_internal_errors(true);
+		$loaded = false;
+		$errors = array();
+
+		try {
+			$loaded = (bool) $this->form->load($custom_xml);
+			$errors = libxml_get_errors();
+		} catch (\Throwable $exception) {
+			$loaded = false;
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors($previousUseErrors);
+		}
+
+		if (!$loaded) {
+			Log::add(
+				sprintf(
+					'The custom fields XML of module %d is invalid, the custom fields were skipped: %s',
+					(int) ($this->moduleid ?? 0),
+					$this->firstXmlError($errors)
+				),
+				Log::WARNING,
+				'mod_wedal_joomla_callback'
+			);
+
+			return false;
+		}
 
 		return true;
+	}
+
+	/**
+	 * Первое сообщение разбора XML в виде, пригодном для журнала: одна строка ограниченной длины, чтобы разметка полей не разрывала запись переводами строк.
+	 *
+	 * @param   \LibXMLError[]  $errors  Ошибки, накопленные libxml за время загрузки.
+	 *
+	 * @return  string
+	 */
+	private function firstXmlError(array $errors)
+	{
+		if ($errors === array()) {
+			return 'no parser message available';
+		}
+
+		$message = preg_replace('/\s+/', ' ', trim((string) $errors[0]->message));
+
+		return sprintf('line %d: %s', (int) $errors[0]->line, mb_strimwidth($message, 0, 200, '..'));
 	}
 
 	// Возвращает разметку всплывающей формы для AJAX-запроса.
