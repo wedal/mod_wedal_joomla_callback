@@ -51,7 +51,7 @@ class Dispatcher extends AbstractModuleDispatcher
 		}
 
 		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
-		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
+		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer' => true]);
 		$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
 
 		Text::script('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
