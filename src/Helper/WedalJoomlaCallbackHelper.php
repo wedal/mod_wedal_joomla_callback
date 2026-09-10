@@ -453,11 +453,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$thankyoutext = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT');
 		}
 
-		ob_start();
-		require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message');
-		$body = ob_get_contents();
-		ob_end_clean();
-
 		$to = $email;
 		$from = array($this->app->get('mailfrom') , $this->app->get('fromname') );
 		$subject = $mailtitle;
@@ -485,7 +480,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 				$this->mailer->addReplyTo($form->values['email']);
 			}
 
-			//Отправка СМС
+			//Отправка СМС. Обязана быть до сборки тела письма: макет письма печатает
+			//результат отправки, когда включена настройка show_smsinfo_in_mail.
+			$sms_status = null;
+
 			if ($form->params->get('enable_sms')) {
 				$sms_status = $this->sendSMS($form);
 
@@ -493,6 +491,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 					return $this->getDeliveryErrorResponse();
 				}
 			}
+
+			$body = $this->renderMessageBody($form, $page_url, $sms_status);
 
 			foreach ($form->form->getFieldset('customfields') as $field) {
 				if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
@@ -545,6 +545,26 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return new JsonResponse(Array('message' => $thankyoutext, 'error' => 0));
+	}
+
+	/** Собирает тело письма по макету *_message.
+	 * @param   WedalJoomlaCallbackHelper  $form        Форма с параметрами и значениями полей.
+	 * @param   string|null                $page_url    Проверенный адрес страницы отправки.
+	 * @param   string|null                $sms_status  Результат sendSMS() или null, если SMS выключены.
+	 *
+	 * @return  string
+	 */
+	private function renderMessageBody($form, $page_url, $sms_status)
+	{
+		ob_start();
+
+		try {
+			require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message');
+		} finally {
+			$body = (string) ob_get_clean();
+		}
+
+		return $body;
 	}
 
 	// Повторяет проверку Session::checkToken(), но без редиректа.
