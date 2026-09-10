@@ -25,21 +25,22 @@ use Joomla\CMS\Form\Form;
 
 class WedalJoomlaCallbackHelper extends \stdClass
 {
+
 	private const SAFE_ATTACHMENT_TYPES = array(
-		'jpg' => 'image/jpeg',
-		'jpeg' => 'image/jpeg',
-		'png' => 'image/png',
-		'gif' => 'image/gif',
-		'webp' => 'image/webp',
-		'avif' => 'image/avif',
-		'bmp' => 'image/bmp',
-		'tif' => 'image/tiff',
-		'tiff' => 'image/tiff',
-		'pdf' => 'application/pdf',
-		'doc' => 'application/msword',
-		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		'xls' => 'application/vnd.ms-excel',
-		'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'jpg' => array('image/jpeg'),
+		'jpeg' => array('image/jpeg'),
+		'png' => array('image/png'),
+		'gif' => array('image/gif'),
+		'webp' => array('image/webp'),
+		'avif' => array('image/avif'),
+		'bmp' => array('image/bmp', 'image/x-ms-bmp'),
+		'tif' => array('image/tiff'),
+		'tiff' => array('image/tiff'),
+		'pdf' => array('application/pdf'),
+		'doc' => array('application/msword', 'application/vnd.ms-office', 'application/x-ole-storage', 'application/cdfv2'),
+		'docx' => array('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'),
+		'xls' => array('application/vnd.ms-excel', 'application/vnd.ms-office', 'application/x-ole-storage', 'application/cdfv2'),
+		'xlsx' => array('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'),
 	);
 
 	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
@@ -747,7 +748,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	// Сверяет расширение и MIME-тип файла с разрешёнными форматами.
 	public function isValidFileType($file_ext, $filetype, $accept) {
 
-		if (!$accept || !is_string($filetype)) {
+		if (!$accept || !is_string($filetype) || !is_string($file_ext)) {
 			return false;
 		}
 
@@ -755,14 +756,18 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$filetype = strtolower($filetype);
 		$accept = strtolower($accept);
 
-		$accept_rules = explode(',', str_replace(' ', '', $accept));
-
-		if (count($accept_rules) == 0 && (!isset(self::SAFE_ATTACHMENT_TYPES[$file_ext]) || self::SAFE_ATTACHMENT_TYPES[$file_ext] !== $filetype)) {
+		// Первый рубеж — белый список
+		if (!isset(self::SAFE_ATTACHMENT_TYPES[$file_ext])
+			|| !in_array($filetype, self::SAFE_ATTACHMENT_TYPES[$file_ext], true)) {
 			return false;
 		}
 
+		$rules_ext = array();
+		$rules_mime = array();
+		$rules_full_mime = array();
+
 		//Разбираем все правила на отдельные расширения и MIME
-		foreach ($accept_rules as $accept_rule) {
+		foreach (explode(',', str_replace(' ', '', $accept)) as $accept_rule) {
 			if (strripos($accept_rule,'/')) {
 				if (strripos($accept_rule,'/*')) {
 					$rules_full_mime[] = stristr($accept_rule,'/*',true);
@@ -775,20 +780,17 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			}
 		}
 
-		if (!empty($rules_ext) && (in_array($file_ext, $rules_ext) || in_array('.' . $file_ext, $rules_ext))) {
+		// Второй рубеж — правило accept формы: оно может только сузить белый список.
+		if (in_array($file_ext, $rules_ext, true) || in_array('.' . $file_ext, $rules_ext, true)) {
 			return true;
 		}
 
-		if (!empty($rules_mime) && in_array($filetype, $rules_mime)) {
+		if (in_array($filetype, $rules_mime, true)) {
 			return true;
 		}
 
 		//Остается случай, когда accept задан в формате image/*
-		if (!empty($rules_full_mime) && in_array(stristr($filetype,'/',true), $rules_full_mime)) {
-			return true;
-		}
-
-		return false;
+		return in_array(stristr($filetype,'/',true), $rules_full_mime, true);
 	}
 
 	// Отправляет уведомление о заявке через SMS.ru.
