@@ -485,8 +485,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		if (!$result)
 		{
-			$errors = $form->form->getErrors();
-			return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR') . ':' . json_encode($errors) , 'error' => 0);
+			return $this->getValidationErrorResponse($form->form->getErrors());
 		}
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
@@ -654,6 +653,30 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	private function getInvalidModuleResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1);
+	}
+
+	// Возвращает ответ о непройденной проверке формы.
+	private function getValidationErrorResponse(array $errors)
+	{
+		$messages = array(Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'));
+
+		foreach ($errors as $error) {
+			if ($error instanceof \Throwable) {
+				$message = $error->getMessage();
+			} elseif (is_scalar($error) || $error instanceof \Stringable) {
+				$message = (string) $error;
+			} else {
+				continue;
+			}
+
+			$message = trim(strip_tags($message));
+
+			if ($message !== '' && !in_array($message, $messages, true)) {
+				$messages[] = $message;
+			}
+		}
+
+		return array('message' => implode("\n", $messages), 'error' => 1);
 	}
 
 	// Отмечает в сессии момент, с которого посетитель видит форму.
