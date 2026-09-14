@@ -46,6 +46,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	private const DEFAULT_ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
 
 	// Пределы ожидания внешних запросов
+	private const SMS_PARTNER_ID = '410554';
 	private const TELEGRAM_CONNECT_TIMEOUT = 5;
 	private const TELEGRAM_TIMEOUT = 10;
 	private const TELEGRAM_UPLOAD_TIMEOUT = 30;
@@ -988,29 +989,35 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$sms_message = mb_strimwidth($sms_message, 0, $form->params->get('sms_send_fields_total_limit', 450), '');
 		}
 
-		require_once('sms.ru.php');
-		$apikey =  $form->params->get('sms_api_key');
-		$sms = new \SMSRU($apikey);
+		$sms = new SmsRu($form->params->get('sms_api_key'));
 
-		$smsdata = new \stdClass();
-		$smsdata->to = $form->params->get('sms_recipient_number');
-		$smsdata->text = $sms_message;
+		$smsdata = array(
+			'to' => $form->params->get('sms_recipient_number'),
+			'msg' => $sms_message,
+			'partner_id' => self::SMS_PARTNER_ID,
+		);
 
 		if ($form->params->get('sms_transliterate')) {
-			$smsdata->translit = 1;
+			$smsdata['translit'] = 1;
 		}
 
-		$smsdata->partner_id = '410554';
-		$sms_response = $sms->send_one($smsdata);
+		$sms_response = $sms->send($smsdata);
 
-		if (isset($sms_response->status) && $sms_response->status == "OK") {
-			$sms_balance = $sms->getBalance();
-			$return_message = Text::sprintf( 'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_SUCCESS', $sms_response->sms_id, $sms_balance->balance);
-		} else {
+		if (!$sms_response->isSuccessful()) {
+			$this->log(sprintf(
+				'The SMS notification was not sent: %s (sms.ru code %d).',
+				$sms_response->getStatusText(),
+				$sms_response->getStatusCode()
+			));
+
 			return false;
 		}
 
-		return $return_message;
+		return Text::sprintf(
+			'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_SUCCESS',
+			implode(', ', $sms_response->getSmsIds()),
+			$sms_response->getBalance()
+		);
 	}
 
 	// Отправляет уведомление и вложения в Telegram.
