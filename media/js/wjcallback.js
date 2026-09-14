@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     let ya_counter = null;
-    if (typeof ym !== 'undefined') {
-        ya_counter = ym['a'][0][0];
+    if (typeof ym !== 'undefined' && Array.isArray(ym.a) && Array.isArray(ym.a[0])) {
+        ya_counter = ym.a[0][0];
     }
 
     document.querySelectorAll('.wjcallbackform.embeddedform').forEach((container) => {
