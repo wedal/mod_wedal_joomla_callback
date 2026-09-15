@@ -6,7 +6,6 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Dispatcher;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
 use Joomla\CMS\Extension\ModuleInterface;
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Input\Input;
 
@@ -37,7 +36,7 @@ class Dispatcher extends AbstractModuleDispatcher
 	/**
 	 * Returns the layout data.
 	 *
-	 * @return  array
+	 * @return  array|false  
 	 *
 	 * @since   4.0.0
 	 */
@@ -47,10 +46,10 @@ class Dispatcher extends AbstractModuleDispatcher
 
 		$data['form'] = $this->moduleExtension->getHelper('WedalJoomlaCallbackHelper');
 		if (!$data['form']->getForm($data['module'])) {
-			throw new \RuntimeException('The requested callback module is unavailable.', 404);
+			return false;
 		}
 
-		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+		$wa = $this->app->getDocument()->getWebAssetManager();
 		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer' => true]);
 		$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
 

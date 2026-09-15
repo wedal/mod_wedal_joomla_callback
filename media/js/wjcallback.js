@@ -169,7 +169,7 @@ function wjcallback_apply_phonemask(container) {
     }
 
     let mask = container.getAttribute('data-phonemask');
-    let input = mask ? container.querySelector('#phone') : null;
+    let input = mask ? container.querySelector('input.phone') : null;
 
     if (!input) {
         return false;

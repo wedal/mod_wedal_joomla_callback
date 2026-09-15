@@ -91,6 +91,18 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
+	/**
+	 * Класс обёртки поля для шаблона — имя поля, приведённое к тем же символам, что и идентификатор. Шаблоны брали для этого `$field->id`.После появления префикса id имени больше не равен, а класс обёртки обязан остаться прежним по причинам обратной совместимости
+	 *
+	 * @param   object  $field  Поле формы Joomla.
+	 *
+	 * @return  string
+	 */
+	public static function fieldWrapperClass($field)
+	{
+		return preg_replace('#\W#', '_', (string) $field->getAttribute('name'));
+	}
+
 	// Загружает параметры модуля и формирует поля формы.
 	public function getForm($moduleid, $startFormTimer = true)
 	{
@@ -136,10 +148,42 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->form->load('<form><fieldset name="fields"></fieldset></form>'); //array("control" => "WJCForm_" . $this->moduleid )
 
 		$this->createFields();
+		$this->prefixFieldIds();
 
 		$this->fields = $this->form->getXml();
 
 		return true;
+	}
+
+	/**
+	 * Приписывает полям формы идентификатор с номером модуля. Без этого id поля равен его имени (`name`, `email`, `phone`), и на странице с двумя экземплярами модуля идентификаторы дублируются: `<label for>` ведёт на чужое поле, а скринридер и клик по подписи попадают не туда. 
+	 */
+	private function prefixFieldIds()
+	{
+		$xml = $this->form->getXml();
+
+		if (!($xml instanceof \SimpleXMLElement)) {
+			return;
+		}
+
+		$fields = $xml->xpath('//field');
+
+		if (!is_array($fields)) {
+			return;
+		}
+
+		// Номер модуля делает id уникальным в пределах страницы.
+		$prefix = 'wjc' . (int) $this->moduleid . '_';
+
+		foreach ($fields as $field) {
+			$name = (string) $field['name'];
+
+			if ($name === '' || (string) $field['id'] !== '') {
+				continue;
+			}
+
+			$field->addAttribute('id', $prefix . $name);
+		}
 	}
 
 	// Возвращает модуль, доступный текущему посетителю и назначенный на текущую страницу.

@@ -55,12 +55,12 @@ $phonemask = $form->params->get('showphonemask')
 
 			        <?php //Базовые поля и их переопределения ?>
 			        <?php foreach ($form->form->getFieldset('fields') as $field) { ?>
-				        <?php echo $field->renderField(array('class' => $field->id . ' ' . $fieldwrapperSuffix)); ?>
+				        <?php echo $field->renderField(array('class' => WedalJoomlaCallbackHelper::fieldWrapperClass($field) . ' ' . $fieldwrapperSuffix)); ?>
 			        <?php } ?>
 
 			        <?php //Дополнительные поля ?>
 			        <?php foreach ($form->form->getFieldset('customfields') as $field) { ?>
-				        <?php echo $field->renderField(array('class' => $field->id . ' ' . $fieldwrapperSuffix)); ?>
+				        <?php echo $field->renderField(array('class' => WedalJoomlaCallbackHelper::fieldWrapperClass($field) . ' ' . $fieldwrapperSuffix)); ?>
 			        <?php } ?>
 
         		</div>
