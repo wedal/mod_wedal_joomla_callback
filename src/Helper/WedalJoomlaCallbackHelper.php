@@ -9,6 +9,7 @@ use Joomla\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Mail\MailHelper;
+use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
@@ -575,7 +576,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 				return $this->getDeliveryErrorResponse();
 			}
 
-			$this->mailer = Factory::getMailer();
+			$this->mailer = Factory::getContainer()->get(MailerFactoryInterface::class)->createMailer();
 			$this->mailer->setSender($from);
 
 			$this->mailer->addRecipient($to);
