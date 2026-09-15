@@ -164,7 +164,7 @@ function wjcallback_request_form_state(container) {
 }
 
 function wjcallback_apply_phonemask(container) {
-    if (!container || typeof Maska === 'undefined') {
+    if (!container || typeof Maska === 'undefined' || typeof Maska.MaskInput !== 'function') {
         return false;
     }
 
@@ -175,7 +175,11 @@ function wjcallback_apply_phonemask(container) {
         return false;
     }
 
-    Maska.create(input, {mask: mask});
+    if (input.wjcallback_mask) {
+        return true;
+    }
+
+    input.wjcallback_mask = new Maska.MaskInput(input, {mask: mask, eager: true});
 
     return true;
 }
