@@ -497,7 +497,7 @@
 
 			<fieldset name="decor">
 				<field
-					name="customfields_note"
+					name="customfields_decor_note"
 					type="note"
 					class="alert alert-info"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_DECOR_NOTE"
