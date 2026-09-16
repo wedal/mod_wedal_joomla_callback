@@ -223,7 +223,10 @@ final class FormBuilderHelper
 			$this->createField($form, $form_field);
 		}
 
-		//Вложение
+		//Дополнительные поля
+		$customfields = $this->createCustomFields($form);
+
+		//Вложение. Поле идёт после дополнительных полей.
 		if ($this->params->get('showattachment', ''))
 		{
 			$form_field = new \stdClass();
@@ -237,11 +240,8 @@ final class FormBuilderHelper
 				$form_field->multiple = true;
 			}
 
-			$this->createField($form, $form_field);
+			$this->createField($form, $form_field, $customfields ? 'customfields' : 'fields');
 		}
-
-		//Дополнительные поля
-		$customfields = $this->createCustomFields($form);
 
 		$captchaPlugin = $this->getCaptchaPlugin();
 
