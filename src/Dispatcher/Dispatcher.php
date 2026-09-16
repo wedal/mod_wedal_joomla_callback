@@ -56,7 +56,7 @@ class Dispatcher extends AbstractModuleDispatcher
 		Text::script('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
 
 		if ($data['params']->get('showphonemask')) {
-			$wa->registerAndUseScript('maska', 'mod_wedal_joomla_callback/maska.js', [] ,['defer ' => true]);
+			$wa->registerAndUseScript('wjphonemask', 'mod_wedal_joomla_callback/wjphonemask.js', [] ,['defer' => true]);
 		}
 
 		$data['params']->set('layout', $data['params']->get('layout', 'default') . ($data['params']->get('moduletype') ? '_embeddedform' : ''));
