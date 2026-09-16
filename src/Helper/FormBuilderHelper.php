@@ -142,6 +142,53 @@ final class FormBuilderHelper
 	}
 
 	/**
+	 * Значения полей Имя и Email авторизованного посетителя. Пустой массив, если настройка выключена, посетитель не авторизован либо соответствующее поле в форме не выводится.
+	 *
+	 * @param   object    $app     Приложение Joomla.
+	 * @param   Registry  $params  Параметры модуля.
+	 *
+	 * @return  array  Значения по именам полей формы.
+	 */
+	public static function getUserPrefill($app, Registry $params)
+	{
+		if (!$params->get('prefilluser')) {
+			return array();
+		}
+
+		$user = $app->getIdentity();
+
+		if (!is_object($user) || !empty($user->guest)) {
+			return array();
+		}
+
+		$prefill = array();
+
+		if ($params->get('showname', '') && trim((string) $user->name) !== '') {
+			$prefill['name'] = (string) $user->name;
+		}
+
+		if ($params->get('showemail', '') && trim((string) $user->email) !== '') {
+			$prefill['email'] = (string) $user->email;
+		}
+
+		return $prefill;
+	}
+
+	/**
+	 * Значения для подстановки в разметку формы. Встроенная форма их не получает: её разметка отдаётся из кэша одна на всех посетителей — там уже нет и токена, — поэтому напечатанные в ней имя и адрес достались бы следующему гостю. Встроенной форме значения приходят живым запросом getFormState, как и токен.
+	 *
+	 * @return  array  Значения по именам полей формы.
+	 */
+	private function getRenderablePrefill()
+	{
+		if ($this->params->get('moduletype', 0)) {
+			return array();
+		}
+
+		return self::getUserPrefill($this->app, $this->params);
+	}
+
+	/**
 	 * Создаёт базовые поля модуля согласно настройкам в нём.
 	 *
 	 * @param   Form  $form  Собираемая форма.
@@ -149,6 +196,8 @@ final class FormBuilderHelper
 	 * @return  void
 	 */
 	private function createFields($form){
+
+		$prefill = $this->getRenderablePrefill();
 
 		//Имя
 		if ($this->params->get('showname', ''))
@@ -159,6 +208,10 @@ final class FormBuilderHelper
 			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');
+
+			if (isset($prefill['name'])) {
+				$form_field->default = $prefill['name'];
+			}
 
 			if ($this->params->get('shownamereq', ''))
 			{
@@ -178,6 +231,10 @@ final class FormBuilderHelper
 			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
 			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL_ERROR');
 			$form_field->validate = 'email';
+
+			if (isset($prefill['email'])) {
+				$form_field->default = $prefill['email'];
+			}
 
 			if ($this->params->get('showemailreq', ''))
 			{

@@ -170,7 +170,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	/**
 	 * Отдаёт живое состояние формы: токен сессии и метку начала заполнения. Встроенная форма попадает в кэш страниц Joomla вместе с разметкой: токен там принадлежит чужой сессии, а метка в сессии не создаётся вовсе, потому что модуль не рендерится. Поэтому и то и другое выдаётся отдельным запросом, минующим кэш, так же, как их получает всплывающая форма в getFormAjax().
 	 *
-	 * @return  array  Ответ com_ajax: токен формы и признак ошибки.
+	 * @return  array  Ответ com_ajax: токен формы, значения полей авторизованного посетителя и признак ошибки.
 	 */
 	public function getFormStateAjax()
 	{
@@ -178,13 +178,22 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
 
-		if ($this->getAccessibleModule($moduleId) === null) {
+		$module = $this->getAccessibleModule($moduleId);
+
+		if ($module === null) {
 			return $this->getInvalidModuleResponse();
 		}
 
 		(new SpamProtectionHelper($this->app))->startFormTimer($moduleId);
 
-		return array('token' => Session::getFormToken(), 'error' => 0);
+		$params = new Registry;
+		$params->loadString($module->params);
+
+		return array(
+			'token' => Session::getFormToken(),
+			'prefill' => FormBuilderHelper::getUserPrefill($this->app, $params),
+			'error' => 0,
+		);
 	}
 
 	/**

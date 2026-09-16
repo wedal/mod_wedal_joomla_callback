@@ -201,6 +201,19 @@
 				</field>
 
 				<field
+					type="radio"
+					name="prefilluser"
+					showon="showname:1[OR]showemail:1"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_PREFILLUSER_DESC"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_PREFILLUSER"
+					default="0"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
 					type="spacer"
 					name="spacer2"
 					hr="true"

@@ -186,11 +186,43 @@ function wjcallback_request_form_state(container) {
         .then((response) => {
             let state = wjcallback_parse_response(response);
 
-            return state && state.token ? wjcallback_set_token(container, state.token) : false;
+            if (!state) {
+                return false;
+            }
+
+            wjcallback_set_prefill(container, state.prefill);
+
+            return state.token ? wjcallback_set_token(container, state.token) : false;
         })
         .catch(() => false);
 
     return container.wjcallback_state;
+}
+
+const WJCALLBACK_PREFILL_FIELDS = ['name', 'email'];
+
+function wjcallback_set_prefill(container, prefill) {
+    let form = container.querySelector('form');
+
+    if (!form || !prefill || typeof prefill !== 'object') {
+        return false;
+    }
+
+    WJCALLBACK_PREFILL_FIELDS.forEach((name) => {
+        let value = prefill[name];
+
+        if (typeof value !== 'string' || value === '') {
+            return;
+        }
+
+        let field = form.querySelector('[name="' + name + '"]');
+
+        if (field && field.value === '') {
+            field.value = value;
+        }
+    });
+
+    return true;
 }
 
 function wjcallback_set_token(container, name) {
