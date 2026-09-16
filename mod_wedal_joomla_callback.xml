@@ -11,7 +11,7 @@
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
-		<folder>services</folder>
+		<folder module="mod_wedal_joomla_callback">services</folder>
 		<folder>tmpl</folder>
 		<folder>src</folder>
 	</files>
