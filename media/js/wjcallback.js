@@ -126,11 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
-/**
- * Отправляет цели счётчиков, указанные в настройках модуля на самом элементе:
- * data-ym-aimid — цель Яндекс.Метрики, data-ga-event — событие Google Аналитики.
- */
 function wjcallback_reach_goals(element) {
     if (!element) {
         return;
@@ -148,11 +143,6 @@ function wjcallback_reach_goals(element) {
     }
 }
 
-/**
- * Событие Google Аналитики. gtag() есть при прямой установке счётчика,
- * при установке через Google Tag Manager остаётся только очередь dataLayer,
- * и событие с таким именем ловится в GTM собственным триггером.
- */
 function wjcallback_send_ga_event(ga_event) {
     if (typeof gtag === 'function') {
         gtag('event', ga_event);
