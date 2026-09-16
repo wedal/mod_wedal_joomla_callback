@@ -585,6 +585,25 @@
 							class="alert alert-info"
 							description="MOD_WEDAL_JOOMLA_CALLBACK_GACOUNTER_NOTE"
 					/>
+
+					<field
+							name="ga_popup"
+							type="text"
+							showon="moduletype:0"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_GAPOPUP"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_GAPOPUP_DESC"
+					/>
+
+					<field
+							name="ga_submit"
+							type="text"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_GASUBMIT"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_GASUBMIT_DESC"
+					/>
 				</fieldset>
 			</fieldset>
 

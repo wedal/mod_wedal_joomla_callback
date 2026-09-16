@@ -25,6 +25,9 @@ $fieldwrapperSuffix = WedalJoomlaCallbackHelper::escapeAttribute($form->params->
 $ymSubmit = $form->params->get('ym_submit')
 	? WedalJoomlaCallbackHelper::escapeAttribute($form->params->get('ym_submit'))
 	: '';
+$gaSubmit = $form->params->get('ga_submit')
+	? WedalJoomlaCallbackHelper::escapeAttribute($form->params->get('ga_submit'))
+	: '';
 $phonemask = $form->params->get('showphonemask')
 	? WedalJoomlaCallbackHelper::escapeAttribute($form->params->get('phonemasktype', Text::_("MOD_WEDAL_JOOMLA_CALLBACK_SHOWPHONEMASKTYPE_TITLE")))
 	: '';
@@ -33,7 +36,7 @@ $phonemask = $form->params->get('showphonemask')
 <div id="WJCForm<?php echo $moduleid ?>" class="wjcallbackform <?php echo $wrapperSuffix ?>" role="dialog" data-id="<?php echo $moduleid ?>"<?php echo $phonemask !== '' ? ' data-phonemask="' . $phonemask . '"' : '' ?>>
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form method="post" name="WJCForm<?php echo $moduleid ?>" class="form-validate <?php echo $formSuffix ?>" enctype="multipart/form-data" <?php echo $ymSubmit !== '' ? 'data-ym-aimid="' . $ymSubmit . '"' : '' ?>>
+            <form method="post" name="WJCForm<?php echo $moduleid ?>" class="form-validate <?php echo $formSuffix ?>" enctype="multipart/form-data" <?php echo $ymSubmit !== '' ? 'data-ym-aimid="' . $ymSubmit . '"' : '' ?> <?php echo $gaSubmit !== '' ? 'data-ga-event="' . $gaSubmit . '"' : '' ?>>
             <input type="text" name="wjcallback_website" value="" autocomplete="off" tabindex="-1" aria-hidden="true" class="wjcallback-honeypot">
 
         		<div class="modal-header">

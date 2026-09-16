@@ -1,8 +1,9 @@
+let wjcallback_ya_counter = null;
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    let ya_counter = null;
     if (typeof ym !== 'undefined' && Array.isArray(ym.a) && Array.isArray(ym.a[0])) {
-        ya_counter = ym.a[0][0];
+        wjcallback_ya_counter = ym.a[0][0];
     }
 
     document.querySelectorAll('.wjcallbackform.embeddedform').forEach((container) => {
@@ -16,9 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         event.preventDefault();
 
-        if (ya_counter && event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid')) {
-            ym(ya_counter, 'reachGoal', event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid'));
-        }
+        wjcallback_reach_goals(event.target.closest('.wjcallback-link'));
 
         let modal_div = document.createElement('div');
         modal_div.id = "wjcallback-modal";
@@ -98,9 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.target.closest('form').querySelector('.modal-footer').style.display = 'none';
                 event.target.closest('form').querySelector('.modal-body').innerHTML = result.message;
 
-                if (ya_counter && event.target.closest('form').getAttribute('data-ym-aimid')) {
-                    ym(ya_counter, 'reachGoal', event.target.closest('form').getAttribute('data-ym-aimid'));
-                }
+                wjcallback_reach_goals(event.target.closest('form'));
             } else {
                 alert(result.message || wjcallback_delivery_error());
             }
@@ -129,6 +126,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
+/**
+ * Отправляет цели счётчиков, указанные в настройках модуля на самом элементе:
+ * data-ym-aimid — цель Яндекс.Метрики, data-ga-event — событие Google Аналитики.
+ */
+function wjcallback_reach_goals(element) {
+    if (!element) {
+        return;
+    }
+
+    let ym_aimid = element.getAttribute('data-ym-aimid');
+    let ga_event = element.getAttribute('data-ga-event');
+
+    if (ym_aimid && wjcallback_ya_counter) {
+        ym(wjcallback_ya_counter, 'reachGoal', ym_aimid);
+    }
+
+    if (ga_event) {
+        wjcallback_send_ga_event(ga_event);
+    }
+}
+
+/**
+ * Событие Google Аналитики. gtag() есть при прямой установке счётчика,
+ * при установке через Google Tag Manager остаётся только очередь dataLayer,
+ * и событие с таким именем ловится в GTM собственным триггером.
+ */
+function wjcallback_send_ga_event(ga_event) {
+    if (typeof gtag === 'function') {
+        gtag('event', ga_event);
+
+        return true;
+    }
+
+    if (Array.isArray(window.dataLayer)) {
+        window.dataLayer.push({'event': ga_event});
+
+        return true;
+    }
+
+    return false;
+}
 
 function wjcallback_ajax_url(method, format, module_id) {
     let options = Joomla.getOptions('wedal_joomla_callback');
