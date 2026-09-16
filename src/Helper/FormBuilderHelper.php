@@ -137,7 +137,6 @@ final class FormBuilderHelper
 			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
 			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');
-			$form_field->filter = 'STRING';
 
 			if ($this->params->get('shownamereq', ''))
 			{
