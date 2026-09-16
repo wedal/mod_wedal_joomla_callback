@@ -3,63 +3,30 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Helper;
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
-use Joomla\Filesystem\File;
 use Joomla\CMS\Helper\ModuleHelper;
-use Joomla\CMS\Plugin\PluginHelper;
-use Joomla\CMS\Mail\MailHelper;
-use Joomla\CMS\Mail\MailerFactoryInterface;
-use Joomla\CMS\Log\Log;
-use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Language\Text;
-use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\Registry\Registry;
-use Joomla\CMS\Form\Form;
 
 /**
  * Helper for mod_wedal_joomla_callback
+ *
+ * Точка входа модуля: его вызывают диспетчер (getForm()) и com_ajax (методы *Ajax()),
+ * а шаблоны получают экземпляр в переменной $form. Сама работа разложена по помощникам:
+ *
+ *  - FormBuilderHelper    — поля формы по настройкам модуля;
+ *  - SpamProtectionHelper — поле-ловушка, время заполнения и лимит заявок;
+ *  - AttachmentHelper     — приём, проверка и удаление вложений;
+ *  - EmailHelper          — письмо с заявкой;
+ *  - SmsHelper            — SMS через sms.ru;
+ *  - TelegramHelper       — уведомление в Telegram;
+ *  - LogHelper            — журнал модуля.
  */
 
 class WedalJoomlaCallbackHelper extends \stdClass
 {
-
-	private const SAFE_ATTACHMENT_TYPES = array(
-		'jpg' => array('image/jpeg'),
-		'jpeg' => array('image/jpeg'),
-		'png' => array('image/png'),
-		'gif' => array('image/gif'),
-		'webp' => array('image/webp'),
-		'avif' => array('image/avif'),
-		'bmp' => array('image/bmp', 'image/x-ms-bmp'),
-		'tif' => array('image/tiff'),
-		'tiff' => array('image/tiff'),
-		'pdf' => array('application/pdf'),
-		'doc' => array('application/msword', 'application/vnd.ms-office', 'application/x-ole-storage', 'application/cdfv2'),
-		'docx' => array('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'),
-		'xls' => array('application/vnd.ms-excel', 'application/vnd.ms-office', 'application/x-ole-storage', 'application/cdfv2'),
-		'xlsx' => array('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'),
-	);
-
-	// Правило accept по умолчанию: совпадает со значением настройки attachmentformat в манифесте и покрывает белый список SAFE_ATTACHMENT_TYPES целиком. Пустое правило означает именно его, а не отказ во вложении.
-	private const DEFAULT_ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
-
-	// Пределы ожидания внешних запросов
-	private const SMS_PARTNER_ID = '410554';
-	private const TELEGRAM_CONNECT_TIMEOUT = 5;
-	private const TELEGRAM_TIMEOUT = 10;
-	private const TELEGRAM_UPLOAD_TIMEOUT = 30;
-	private const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
-	private const TELEGRAM_PHOTO_TYPES = array('image/jpeg', 'image/png', 'image/webp');
-
-	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
-	private const RATE_LIMIT_MODULE_FACTOR = 20;
-
-	// Категория и файл журнала модуля.
-	private const LOG_CATEGORY = 'mod_wedal_joomla_callback';
-	private const LOG_FILE = 'mod_wedal_joomla_callback.php';
 
 	// Инициализирует приложение и параметры JavaScript.
 	public function __construct()
@@ -71,19 +38,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$js_params['baseurl'] = Uri::root(true);
 
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
-	}
-
-	/**
-	 * Пишет запись в журнал модуля.
-	 */
-	private function log($message, $priority = Log::WARNING)
-	{
-		try {
-			Log::addLogger(array('text_file' => self::LOG_FILE), Log::ALL, array(self::LOG_CATEGORY));
-			Log::add($message, $priority, self::LOG_CATEGORY);
-		} catch (\Throwable $exception) {
-			// Потерянная запись журнала лучше прерванной заявки.
-		}
 	}
 
 	// Экранирует значение для вывода в HTML-атрибут шаблона.
@@ -127,7 +81,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->params = new Registry;
 		$this->params->loadString($module->params);
 		if ($startFormTimer) {
-			$this->startFormTimer($this->moduleid);
+			$this->formStartedAt = (new SpamProtectionHelper($this->app))->startFormTimer($this->moduleid);
 		}
 
 		$this->app->getLanguage()->load('mod_wedal_joomla_callback');
@@ -145,46 +99,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$this->formtitle = $this->params->get('formtitle', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TITLE'));
 		}
 
-		$this->form = new Form('form'.$this->moduleid);
-		$this->form->load('<form><fieldset name="fields"></fieldset></form>'); //array("control" => "WJCForm_" . $this->moduleid )
-
-		$this->createFields();
-		$this->prefixFieldIds();
-
+		$this->form = (new FormBuilderHelper($this->app, $this->params, $this->moduleid))->build();
 		$this->fields = $this->form->getXml();
 
 		return true;
-	}
-
-	/**
-	 * Приписывает полям формы идентификатор с номером модуля. Без этого id поля равен его имени (`name`, `email`, `phone`), и на странице с двумя экземплярами модуля идентификаторы дублируются: `<label for>` ведёт на чужое поле, а скринридер и клик по подписи попадают не туда. 
-	 */
-	private function prefixFieldIds()
-	{
-		$xml = $this->form->getXml();
-
-		if (!($xml instanceof \SimpleXMLElement)) {
-			return;
-		}
-
-		$fields = $xml->xpath('//field');
-
-		if (!is_array($fields)) {
-			return;
-		}
-
-		// Номер модуля делает id уникальным в пределах страницы.
-		$prefix = 'wjc' . (int) $this->moduleid . '_';
-
-		foreach ($fields as $field) {
-			$name = (string) $field['name'];
-
-			if ($name === '' || (string) $field['id'] !== '') {
-				continue;
-			}
-
-			$field->addAttribute('id', $prefix . $name);
-		}
 	}
 
 	// Возвращает модуль, доступный текущему посетителю и назначенный на текущую страницу.
@@ -205,263 +123,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		return $module;
-	}
-
-	// Добавляет динамически сформированное поле в форму.
-	public function createField($form_params, $fieldset = 'fields'){
-		$note = new \SimpleXMLElement('<field />');
-
-		$form_params->class = $form_params->name;
-
-		foreach ($form_params as $key => $value) {
-			// SimpleXMLElement приводит true к "1", а Joomla считает поле обязательным
-			// только при required="true" или required="required" (FormField::validate()).
-			// Поэтому булевы значения атрибутов нормализуем в строки.
-			if (is_bool($value)) {
-				$value = $value ? 'true' : 'false';
-			}
-
-			$note->addAttribute($key, (string) $value);
-		}
-
-		$this->form->setField($note, null, true, $fieldset);
-	}
-
-	// Возвращает CAPTCHA-плагин модуля, если он выбран и включён.
-	private function getCaptchaPlugin()
-	{
-		$plugin = trim((string) $this->params->get('captcha', '0'));
-
-		if ($plugin === '' || $plugin === '0') {
-			return '';
-		}
-
-		if (!PluginHelper::isEnabled('captcha', $plugin)) {
-			$this->log(sprintf('The CAPTCHA plugin "%s" selected in the module is not enabled, the field was skipped.', $plugin));
-
-			return '';
-		}
-
-		return $plugin;
-	}
-
-	//Создает базовые поля модуля согласно настройкам в нем
-	public function createFields(){
-
-		//Имя
-		if ($this->params->get('showname', ''))
-		{
-			$form_field       = new \stdClass();
-			$form_field->name = 'name';
-			$form_field->type = 'text';
-			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
-			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME');
-			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_NAME_ERROR');
-			$form_field->filter = 'STRING';
-
-			if ($this->params->get('shownamereq', ''))
-			{
-				$form_field->required = true;
-			}
-
-			$this->createField($form_field);
-		}
-
-		//Email
-		if ($this->params->get('showemail', ''))
-		{
-			$form_field       = new \stdClass();
-			$form_field->name = 'email';
-			$form_field->type = 'email';
-			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
-			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAIL');
-			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_EMAIL_ERROR');
-			$form_field->validate = 'email';
-
-			if ($this->params->get('showemailreq', ''))
-			{
-				$form_field->required = true;
-			}
-
-			$this->createField($form_field);
-		}
-
-		//Телефон
-		if ($this->params->get('showphone', ''))
-		{
-			$form_field = new \stdClass();
-			$form_field->name = 'phone';
-			$form_field->type = 'tel';
-			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE');
-			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE');
-			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_PHONE_ERROR');
-
-			if ($this->params->get('showphonereq', ''))
-			{
-				$form_field->required = true;
-			}
-
-			$this->createField($form_field);
-		}
-
-		//Комментарий
-		if ($this->params->get('showtextarea', ''))
-		{
-			$form_field = new \stdClass();
-			$form_field->name = 'comment';
-			$form_field->type = 'textarea';
-			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA');
-			$form_field->hint = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TEXTAREA');
-			$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MESSAGE_ERROR');
-
-			if ($this->params->get('showtextareareq', ''))
-			{
-				$form_field->required = true;
-			}
-
-			$this->createField($form_field);
-		}
-
-		//Вложение
-		if ($this->params->get('showattachment', ''))
-		{
-			$form_field = new \stdClass();
-			$form_field->name = 'attachments';
-			$form_field->type = 'file';
-			$form_field->label = $this->params->get('attachmentlabel', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_LABEL_TITLE'));
-			$form_field->accept = $this->params->get('attachmentformat', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE'));
-
-			if ($this->params->get('allow_multi_attachment', ''))
-			{
-				$form_field->multiple = true;
-			}
-
-			$this->createField($form_field);
-		}
-
-		//Дополнительные поля
-		$customfields = $this->createCustomFields();
-
-		$captchaPlugin = $this->getCaptchaPlugin();
-
-		if ($captchaPlugin !== '') {
-			$form_field = new \stdClass();
-			$form_field->name = 'captcha';
-			$form_field->type = 'captcha';
-			$form_field->plugin = $captchaPlugin;
-			// Своё пространство имён на экземпляр модуля, чтобы виджеты нескольких форм
-			// на одной странице не конфликтовали.
-			$form_field->namespace = 'wjcallback' . $this->moduleid;
-			$form_field->validate = 'captcha';
-			$form_field->required = true;
-			$form_field->label = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA');
-
-			$this->createField($form_field);
-		}
-
-		//Согласие с условиями
-		if ($this->params->get('showtos'))
-		{
-			$form_field = new \stdClass();
-			$form_field->name = 'tos_box';
-
-			if ($this->params->get('toscheckbox')) {
-				$form_field->type = 'checkbox';
-				$form_field->required = true;
-				$form_field->{'data-error'} = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOS_ERROR');
-			} else {
-				$form_field->type = 'note';
-				$form_field->heading = 'div';
-			}
-
-			if ($this->params->get('toslink', '#') != '#')
-			{
-				$tosLinkText = $this->params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE'));
-				$form_field->label = $tosLinkText;
-
-				try {
-					$article = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Articles', 'Site', ['ignore_request' => true]);
-
-					$article->setState('filter.article_id', $this->params->get('toslink'));
-					$article->setState('filter.published', 1);
-					$article->setState('params', Factory::getApplication()->getParams());
-					$article->setState('list.limit', 1);
-					$tosArticles = $article->getItems();
-
-					if (!isset($tosArticles[0]) || !is_object($tosArticles[0])) {
-						$this->log('The configured Terms of Service article is unavailable.');
-					} else {
-						$tosArticle = $tosArticles[0];
-						$articleSlug = $tosArticle->id . ':' . $tosArticle->alias;
-						$tosLink = Route::_(RouteHelper::getArticleRoute($articleSlug, $tosArticle->catid, $tosArticle->language));
-						$form_field->label = Text::sprintf('MOD_WEDAL_JOOMLA_CALLBACK_TOSTEXT', $tosLink, $tosLinkText);
-					}
-				} catch (\Throwable $exception) {
-					$this->log('The configured Terms of Service article could not be loaded.');
-				}
-			}
-
-
-			$this->createField($form_field, $customfields ? 'customfields' : 'fields');
-
-		}
-	}
-
-	//Создает дополнительные поля модуля согласно настройкам на вкладке дополнительных полей
-	public function createCustomFields(){
-		if (!$this->params->get('enable_customfields', '0')) {
-			return false;
-		}
-
-		if (!$this->params->get('customfields', '')) {
-			return false;
-		}
-
-		$custom_xml = '<form><fieldset name="customfields">' .$this->params->get('customfields', ''). '</fieldset></form>';
-
-		$previousUseErrors = libxml_use_internal_errors(true);
-		$loaded = false;
-		$errors = array();
-
-		try {
-			$loaded = (bool) $this->form->load($custom_xml);
-			$errors = libxml_get_errors();
-		} catch (\Throwable $exception) {
-			$loaded = false;
-		} finally {
-			libxml_clear_errors();
-			libxml_use_internal_errors($previousUseErrors);
-		}
-
-		if (!$loaded) {
-			$this->log(sprintf(
-				'The custom fields XML of module %d is invalid, the custom fields were skipped: %s',
-				(int) ($this->moduleid ?? 0),
-				$this->firstXmlError($errors)
-			));
-
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Первое сообщение разбора XML в виде, пригодном для журнала: одна строка ограниченной длины, чтобы разметка полей не разрывала запись переводами строк.
-	 *
-	 * @param   \LibXMLError[]  $errors  Ошибки, накопленные libxml за время загрузки.
-	 *
-	 * @return  string
-	 */
-	private function firstXmlError(array $errors)
-	{
-		if ($errors === array()) {
-			return 'no parser message available';
-		}
-
-		$message = preg_replace('/\s+/', ' ', trim((string) $errors[0]->message));
-
-		return sprintf('line %d: %s', (int) $errors[0]->line, mb_strimwidth($message, 0, 200, '..'));
 	}
 
 	// Возвращает разметку всплывающей формы для AJAX-запроса.
@@ -492,7 +153,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			return $this->getInvalidModuleResponse();
 		}
 
-		$this->startFormTimer($moduleId);
+		(new SpamProtectionHelper($this->app))->startFormTimer($moduleId);
 
 		return array('token' => Session::getFormToken(), 'error' => 0);
 	}
@@ -506,16 +167,7 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		}
 
 		$moduleId = $this->app->getInput()->get('modid', null, 'int');
-		$pageUrl = rawurldecode((string) $this->app->getInput()->get('page', '', 'RAW'));
-		$page_url = null;
-
-		if (strlen($pageUrl) <= 2048 && filter_var($pageUrl, FILTER_VALIDATE_URL)) {
-			$pageScheme = parse_url($pageUrl, PHP_URL_SCHEME);
-
-			if (in_array(strtolower((string) $pageScheme), array('http', 'https'), true)) {
-				$page_url = $pageUrl;
-			}
-		}
+		$page_url = $this->getPageUrl();
 
 		$form = new WedalJoomlaCallbackHelper;
 		if (!$form->getForm($moduleId, false)) {
@@ -524,14 +176,8 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$data = $this->app->getInput()->post->getArray();
 
-		if ($form->params->get('enable_antispam', 1)) {
-			if (!empty($data['wjcallback_website']) || !$this->hasMinimumFillTime($moduleId, $form->params)) {
-				return $this->getSpamProtectionResponse();
-			}
-
-			if ($this->isRateLimited($moduleId, $form->params)) {
-				return $this->getSpamProtectionResponse();
-			}
+		if ((new SpamProtectionHelper($this->app))->isSpam($moduleId, $form->params, $data)) {
+			return $this->getSpamProtectionResponse();
 		}
 
 		$form->values  = $form->form->filter($data);
@@ -545,54 +191,19 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		unset($form->values['tos_box']); //Наверное мы не хотим видеть согласие с условиями в письме, т.к. это предполагается по умолчанию.
 
-		//Отправка на почту
-		$mailtitle = $form->params->get('mailtitle', '');
-		if (!$mailtitle) {
-			$mailtitle = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_MAILTITLE_DEFAULT');
-		}
-
-		$email =  $form->params->get('email', '');
-		if (!$email) {
-			$email = $this->app->get('mailfrom');
-		}
-
 		$thankyoutext = $form->params->get('thankyoutext', '');
 		if (!$thankyoutext) {
 			$thankyoutext = Text::_('MOD_WEDAL_JOOMLA_CALLBACK_THANKYOUTEXT');
 		}
 
-		$to = $email;
-		$from = array($this->app->get('mailfrom') , $this->app->get('fromname') );
-		$subject = $mailtitle;
-
-		// Проверяем, есть ли среди дополнительных полей поля типа file и, если таковые имеются, прикрепляем выбранные файлы как вложения к письму
-		$attached_files = array();
+		$attachments = new AttachmentHelper($this->app);
 
 		try {
+			// Почтовик бросает исключение на некорректный адрес, поэтому письмо готовится под обработчиком.
+			$mail = new EmailHelper($this->app, $form);
 
-			if (!MailHelper::isEmailAddress($to)) {
-				$this->log('The recipient address is not a valid email address.', Log::ERROR);
-
+			if (!$mail->prepare()) {
 				return $this->getDeliveryErrorResponse();
-			}
-
-			$this->mailer = Factory::getContainer()->get(MailerFactoryInterface::class)->createMailer();
-			$this->mailer->setSender($from);
-
-			$this->mailer->addRecipient($to);
-
-			if ($form->params->get('email_additional', '')) {
-				$additional_recipients = preg_split('/\r\n|[\r\n]/', $form->params->get('email_additional', ''));
-
-				foreach ($additional_recipients as $additional_recipient) {
-					if (MailHelper::isEmailAddress($additional_recipient)) {
-						$this->mailer->addRecipient($additional_recipient);
-					}
-				}
-			}
-
-			if (!empty($form->values['email'])) {
-				$this->mailer->addReplyTo($form->values['email']);
 			}
 
 			//Отправка СМС. Обязана быть до сборки тела письма: макет письма печатает
@@ -600,86 +211,46 @@ class WedalJoomlaCallbackHelper extends \stdClass
 			$sms_status = null;
 
 			if ($form->params->get('enable_sms')) {
-				$sms_status = $this->sendSMS($form);
+				$sms_status = (new SmsHelper($form))->send();
 
 				if ($sms_status === false) {
 					return $this->getDeliveryErrorResponse();
 				}
 			}
 
-			$body = $this->renderMessageBody($form, $page_url, $sms_status);
+			$attached_files = $attachments->receive($form);
 
-			foreach ($form->form->getFieldset('customfields') as $field) {
-				if (!empty($field->getAttribute('name')) && !empty($field->getAttribute('type')) && $field->getAttribute('type') == 'file') {
-					$custom_attached_files = $this->attach_file($field->getAttribute('name'), $form, true);
-
-					if ($custom_attached_files && is_array($custom_attached_files)) {
-						$attached_files = array_merge($attached_files, $custom_attached_files);
-					}
-				}
-			}
-
-			// Стандартное Вложение
-			if ($form->params->get('showattachment')) {
-				$standart_attached_files = $this->attach_file('attachments', $form, true);
-
-				if ($standart_attached_files && is_array($standart_attached_files)) {
-					$attached_files = array_merge($attached_files, $standart_attached_files);
-				}
-			}
-
-			$this->mailer->setSubject($subject);
-			$this->mailer->setBody($body);
-			$this->mailer->isHTML();
-
-			if ($this->mailer->send() !== true) {
+			if (!$mail->send($page_url, $sms_status, $attached_files)) {
 				return $this->getDeliveryErrorResponse();
 			}
 
 			//Отправка в Telegram. Должна быть до удаления загруженных файлов!
 			if ($form->params->get('enable_telegram')) {
-				if (!$this->sendTelegram($form, $attached_files, $page_url)) {
-					$this->log('The Telegram notification was not delivered.');
+				if (!(new TelegramHelper($form))->send($attached_files, $page_url)) {
+					LogHelper::add('The Telegram notification was not delivered.');
 				}
 			}
 		} catch (\Throwable $exception) {
 			return $this->getDeliveryErrorResponse();
 		} finally {
-			if (!empty($attached_files)) {
-				$tmpPath = $this->app->get('tmp_path');
-
-				foreach ($attached_files as $file) {
-					$filename = $file['stored_name'];
-					$dest = $tmpPath . '/' . $filename;
-
-					if (File::exists($dest)) {
-						File::delete($dest);
-					}
-				}
-			}
+			$attachments->cleanup();
 		}
 
 		return array('message' => $thankyoutext, 'error' => 0);
 	}
 
-	/** Собирает тело письма по макету *_message.
-	 * @param   WedalJoomlaCallbackHelper  $form        Форма с параметрами и значениями полей.
-	 * @param   string|null                $page_url    Проверенный адрес страницы отправки.
-	 * @param   string|null                $sms_status  Результат sendSMS() или null, если SMS выключены.
-	 *
-	 * @return  string
-	 */
-	private function renderMessageBody($form, $page_url, $sms_status)
+	// Адрес страницы, с которой отправлена заявка. Приходит от посетителя, поэтому принимается только http(s) разумной длины.
+	private function getPageUrl()
 	{
-		ob_start();
+		$pageUrl = rawurldecode((string) $this->app->getInput()->get('page', '', 'RAW'));
 
-		try {
-			require ModuleHelper::getLayoutPath('mod_wedal_joomla_callback', $form->params->get('layout', 'default') . '_message');
-		} finally {
-			$body = (string) ob_get_clean();
+		if (strlen($pageUrl) > 2048 || !filter_var($pageUrl, FILTER_VALIDATE_URL)) {
+			return null;
 		}
 
-		return $body;
+		$pageScheme = parse_url($pageUrl, PHP_URL_SCHEME);
+
+		return in_array(strtolower((string) $pageScheme), array('http', 'https'), true) ? $pageUrl : null;
 	}
 
 	// Повторяет проверку Session::checkToken(), но без редиректа.
@@ -734,88 +305,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return array('message' => implode("\n", $messages), 'error' => 1);
 	}
 
-	// Отмечает в сессии момент, с которого посетитель видит форму.
-	private function startFormTimer($moduleId)
-	{
-		$this->formStartedAt = time();
-		$this->app->getSession()->set('wjcallback.form_started.' . $moduleId, $this->formStartedAt);
-	}
-
-	// Проверяет, что пользователь заполнял форму не слишком быстро.
-	private function hasMinimumFillTime($moduleId, Registry $params)
-	{
-		$minimumFillTime = max(0, min(60, (int) $params->get('minimum_fill_time', 3)));
-		$formStartedAt = (int) $this->app->getSession()->get('wjcallback.form_started.' . $moduleId, 0);
-
-		return $formStartedAt > 0 && time() - $formStartedAt >= $minimumFillTime;
-	}
-
-	// Проверяет и увеличивает счётчики лимита заявок.
-	// Отказ хранилища не должен блокировать заявку: honeypot, минимальное время, заполнения и CAPTCHA продолжают работать, поэтому здесь fail-open.
-	private function isRateLimited($moduleId, Registry $params)
-	{
-		try {
-			return $this->checkRateLimit($moduleId, $params);
-		} catch (\Throwable $exception) {
-			$this->log('The rate limit storage is unavailable, the check was skipped.');
-
-			return false;
-		}
-	}
-
-	// Считает заявки в скользящем окне по модулю, IP-адресу и сессии.
-	private function checkRateLimit($moduleId, Registry $params)
-	{
-		$maximumRequests = max(1, min(20, (int) $params->get('rate_limit_requests', 3)));
-		$window = max(60, min(86400, (int) $params->get('rate_limit_window', 3600)));
-		$now = time();
-		$sessionId = (string) $this->app->getSession()->getId();
-		$ipAddress = (string) $this->app->getInput()->server->getString('REMOTE_ADDR', 'unknown');
-		$cache = $this->getRateLimitCache($window);
-
-		$limits = array(
-			'module:' . $moduleId => $maximumRequests * self::RATE_LIMIT_MODULE_FACTOR,
-			'ip:' . hash('sha256', $ipAddress) => $maximumRequests,
-			'session:' . hash('sha256', $sessionId) => $maximumRequests,
-		);
-		$cacheEntries = array();
-
-		foreach ($limits as $key => $maximum) {
-			$cacheId = 'rate_limit_' . hash('sha256', $key);
-			$timestamps = $cache->get($cacheId);
-			$timestamps = is_array($timestamps) ? $timestamps : array();
-			$timestamps = array_values(array_filter($timestamps, static function ($timestamp) use ($now, $window) {
-				return is_int($timestamp) && $timestamp > $now - $window;
-			}));
-
-			if (count($timestamps) >= $maximum) {
-				return true;
-			}
-
-			$timestamps[] = $now;
-			$cacheEntries[$cacheId] = $timestamps;
-		}
-
-		foreach ($cacheEntries as $cacheId => $timestamps) {
-			$cache->store($timestamps, $cacheId);
-		}
-
-		return false;
-	}
-
-	// Возвращает хранилище счётчиков лимита заявок.
-	private function getRateLimitCache($window)
-	{
-		return Factory::getContainer()
-			->get(CacheControllerFactoryInterface::class)
-			->createCacheController('output', array(
-				'defaultgroup' => 'mod_wedal_joomla_callback',
-				'caching' => true,
-				'lifetime' => (int) ceil($window / 60),
-				'locking' => false,
-			));
-	}
-
 	// Формирует единый ответ при срабатывании антиспам-защиты.
 	private function getSpamProtectionResponse()
 	{
@@ -826,424 +315,6 @@ class WedalJoomlaCallbackHelper extends \stdClass
 	private function getDeliveryErrorResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR'), 'error' => 1);
-	}
-
-	/**
-	 * Прикрепляет файлы поля к сообщению или письму
-	 *
-	 * @param   string   $file_field_name  	Имя поля вложения.
-	 * @param   mixed    $form    			Объект формы
-	 * @param   bool  	$attach_to_mail     Прикреплять ли файлы к письму
-	 *
-	 * @return  array	Принятые файлы: к каждому добавлены stored_name и mime_type.
-	 */
-	public function attach_file($file_field_name, $form, $attach_to_mail) {
-
-		$files = $this->normalizeUploadedFiles($this->app->getInput()->files->get($file_field_name));
-
-		if (empty($files)) {
-			return array();
-		}
-
-		$tmpPath = $this->app->get('tmp_path');
-		$accept = $this->getAcceptRule($file_field_name, $form);
-		$returned_files = array();
-
-		foreach ($files as $key => $file)
-		{
-			if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-				continue;
-			}
-
-			$fileExt = strtolower(File::getExt($file['name']));
-			$mimeType = false;
-			$finfo = new \finfo(FILEINFO_MIME_TYPE);
-
-			if ($finfo) {
-				$mimeType = $finfo->file($file['tmp_name']);
-			}
-
-			if (!$this->isValidFileType($fileExt, $mimeType, $accept)) {
-				$this->logDroppedAttachment($file_field_name, $fileExt, $mimeType, 'the type is not allowed');
-
-				continue;
-			}
-
-			$storedName = bin2hex(random_bytes(16)) . '.' . $fileExt;
-			$dest = $tmpPath . '/' . $storedName;
-
-			if (File::upload($file['tmp_name'], $dest)) {
-				$file['stored_name'] = $storedName;
-				$file['mime_type'] = $mimeType;
-				$returned_files[$key] = $file;
-
-				if ($attach_to_mail) {
-					$this->mailer->addAttachment($dest, File::makeSafe($file['name']));
-				}
-			} else {
-				$this->logDroppedAttachment($file_field_name, $fileExt, $mimeType, 'the file could not be written to tmp_path');
-			}
-		}
-
-		return $returned_files;
-	}
-
-	/** Приводит вложения поля к списку файлов.
-	 * @param   mixed  $files  Значение поля из Files::get().
-	 *
-	 * @return  array  Список файлов, у каждого непустое имя.
-	 */
-	private function normalizeUploadedFiles($files)
-	{
-		if (!is_array($files) || $files === array()) {
-			return array();
-		}
-
-		if (array_key_exists('tmp_name', $files) && !is_array($files['tmp_name'])) {
-			$files = array($files);
-		}
-
-		$normalized = array();
-
-		foreach ($files as $key => $file) {
-			if (is_array($file) && !empty($file['name']) && !is_array($file['name'])) {
-				$normalized[$key] = $file;
-			}
-		}
-
-		return $normalized;
-	}
-
-	/** Возвращает правило accept для поля вложения.
-	 *
-	 * @param   string  $file_field_name  Имя поля вложения.
-	 * @param   mixed   $form             Объект формы.
-	 *
-	 * @return  string
-	 */
-	private function getAcceptRule($file_field_name, $form)
-	{
-		if ($file_field_name === 'attachments') {
-			$accept = trim((string) $form->params->get('attachmentformat', ''));
-		} else {
-			$field = $form->form->getField($file_field_name);
-			$accept = $field ? trim((string) $field->getAttribute('accept')) : '';
-		}
-
-		return $accept === '' ? self::DEFAULT_ATTACHMENT_ACCEPT : $accept;
-	}
-
-	// Записывает причину, по которой вложение не ушло. 
-	private function logDroppedAttachment($file_field_name, $fileExt, $mimeType, $reason)
-	{
-		$this->log(sprintf(
-			'The attachment from the field "%s" was dropped: %s (extension "%s", detected type "%s").',
-			$this->forLog($file_field_name, '/^[a-z0-9_\-]{1,64}$/i'),
-			$reason,
-			$this->forLog($fileExt, '/^[a-z0-9]{1,10}$/i'),
-			$this->forLog($mimeType, '#^[a-z0-9.+\-]+/[a-z0-9.+\-]+$#i')
-		));
-	}
-
-	// Расширение файла приходит из его имени, то есть от посетителя. В журнал попадает только значение подходящей формы: остальное — 'unknown', иначе строку журнала можно было бы разорвать переводом строки и подделать в ней запись любого уровня.
-	private function forLog($value, $pattern)
-	{
-		return is_string($value) && preg_match($pattern, $value) ? strtolower($value) : 'unknown';
-	}
-
-	// Сверяет расширение и MIME-тип файла с разрешёнными форматами.
-	public function isValidFileType($file_ext, $filetype, $accept) {
-
-		if (!$accept || !is_string($filetype) || !is_string($file_ext)) {
-			return false;
-		}
-
-		$file_ext = strtolower($file_ext);
-		$filetype = strtolower($filetype);
-		$accept = strtolower($accept);
-
-		// Первый рубеж — белый список
-		if (!isset(self::SAFE_ATTACHMENT_TYPES[$file_ext])
-			|| !in_array($filetype, self::SAFE_ATTACHMENT_TYPES[$file_ext], true)) {
-			return false;
-		}
-
-		$rules_ext = array();
-		$rules_mime = array();
-		$rules_full_mime = array();
-
-		//Разбираем все правила на отдельные расширения и MIME
-		foreach (explode(',', str_replace(' ', '', $accept)) as $accept_rule) {
-			if (strripos($accept_rule,'/')) {
-				if (strripos($accept_rule,'/*')) {
-					$rules_full_mime[] = stristr($accept_rule,'/*',true);
-				} else {
-					$rules_mime[] = $accept_rule;
-				}
-
-			} else {
-				$rules_ext[] = $accept_rule;
-			}
-		}
-
-		// Второй рубеж — правило accept формы: оно может только сузить белый список.
-		if (in_array($file_ext, $rules_ext, true) || in_array('.' . $file_ext, $rules_ext, true)) {
-			return true;
-		}
-
-		if (in_array($filetype, $rules_mime, true)) {
-			return true;
-		}
-
-		//Остается случай, когда accept задан в формате image/*
-		return in_array(stristr($filetype,'/',true), $rules_full_mime, true);
-	}
-
-	// Отправляет уведомление о заявке через SMS.ru.
-	public function sendSMS($form) {
-		if (!$form->params->get('sms_api_key') || !$form->params->get('sms_recipient_number')) {
-			return false;
-		}
-
-		//Формируем СМС сообщение
-		$sms_message = '';
-
-		if ($form->params->get('sms_introtext')) {
-			$sms_message .= $form->params->get('sms_introtext');
-		}
-
-		$sms_send_fields = $form->params->get('sms_send_fields');
-
-		if (!empty($sms_send_fields)) {
-			$sms_send_fields_array = explode(',', str_replace(' ', '', $sms_send_fields));
-			$sms_send_fields_limit = $form->params->get('sms_send_fields_limit', 100);
-			$sms_message_field_values = array();
-
-			foreach ($sms_send_fields_array as $sms_send_field) {
-				if (!empty($form->values[$sms_send_field]))	{
-					if (is_array($form->values[$sms_send_field])) {
-						$sms_send_field_value = implode(', ', $form->values[$sms_send_field]);
-					} else {
-						$sms_send_field_value = (string) $form->values[$sms_send_field];
-					}
-					$sms_message_field_values[] = mb_strimwidth($sms_send_field_value, 0, $sms_send_fields_limit, '..');
-				}
-			}
-
-			$sms_message .= implode(',', $sms_message_field_values);
-			$sms_message = mb_strimwidth($sms_message, 0, $form->params->get('sms_send_fields_total_limit', 450), '');
-		}
-
-		$sms = new SmsRu($form->params->get('sms_api_key'));
-
-		$smsdata = array(
-			'to' => $form->params->get('sms_recipient_number'),
-			'msg' => $sms_message,
-			'partner_id' => self::SMS_PARTNER_ID,
-		);
-
-		if ($form->params->get('sms_transliterate')) {
-			$smsdata['translit'] = 1;
-		}
-
-		$sms_response = $sms->send($smsdata);
-
-		if (!$sms_response->isSuccessful()) {
-			$this->log(sprintf(
-				'The SMS notification was not sent: %s (sms.ru code %d).',
-				$sms_response->getStatusText(),
-				$sms_response->getStatusCode()
-			));
-
-			return false;
-		}
-
-		return Text::sprintf(
-			'MOD_WEDAL_JOOMLA_CALLBACK_SMS_SEND_SUCCESS',
-			implode(', ', $sms_response->getSmsIds()),
-			$sms_response->getBalance()
-		);
-	}
-
-	// Отправляет уведомление и вложения в Telegram.
-	public function sendTelegram($form, $attached_files, $page_url = null) {
-		if (!$form->params->get('telegram_api_key') || !$form->params->get('telegram_chat_id')) {
-			return false;
-		}
-
-		//Отправка запроса
-		$tg_query = array(
-			"chat_id" 	=> $form->params->get('telegram_chat_id'),
-			"text"  	=> $this->buildTelegramMessage($form, $page_url),
-			"parse_mode" => "html",
-		);
-
-		if (!$this->requestTelegram($form, 'sendMessage', http_build_query($tg_query), self::TELEGRAM_TIMEOUT)) {
-			return false;
-		}
-
-		//Отправка вложений
-		if (empty($attached_files)) {
-			return true;
-		}
-
-		$delivered = true;
-
-		foreach ($this->buildTelegramMediaBatches($attached_files) as $batch) {
-			if (!$this->sendTelegramMediaBatch($form, $batch)) {
-				$delivered = false;
-			}
-		}
-
-		return $delivered;
-	}
-
-	/** Раскладывает вложения по запросам Telegram.
-	 * @param   array  $attached_files  Принятые вложения из attach_file().
-	 *
-	 * @return  array[]  Пачки вида ['type' => 'photo'|'document', 'files' => [...]].
-	 */
-	private function buildTelegramMediaBatches($attached_files)
-	{
-		$groups = array('photo' => array(), 'document' => array());
-
-		foreach ($attached_files as $file) {
-			$groups[$this->getTelegramMediaType($this->getAttachmentMimeType($file))][] = $file;
-		}
-
-		$batches = array();
-
-		foreach ($groups as $type => $files) {
-			foreach (array_chunk($files, self::TELEGRAM_MEDIA_GROUP_LIMIT) as $chunk) {
-				$batches[] = array('type' => $type, 'files' => $chunk);
-			}
-		}
-
-		return $batches;
-	}
-
-	// Тип содержимого определяет finfo при приёме файла.
-	private function getAttachmentMimeType($file)
-	{
-		return isset($file['mime_type']) && is_string($file['mime_type']) && $file['mime_type'] !== ''
-			? $file['mime_type']
-			: 'application/octet-stream';
-	}
-
-	// Фотографией уходит только то, что Telegram точно принимает как изображение. Остальное — документом: так владелец сайта получает файл в исходном виде, а не ошибку доставки.
-	private function getTelegramMediaType($mimeType)
-	{
-		return in_array(strtolower((string) $mimeType), self::TELEGRAM_PHOTO_TYPES, true) ? 'photo' : 'document';
-	}
-
-	/** Отправляет одну пачку вложений.
-	 * @param   WedalJoomlaCallbackHelper  $form   Форма с параметрами модуля.
-	 * @param   array                      $batch  Пачка из buildTelegramMediaBatches().
-	 *
-	 * @return  bool
-	 */
-	private function sendTelegramMediaBatch($form, $batch)
-	{
-		$tmpPath = $this->app->get('tmp_path');
-		$query = array('chat_id' => $form->params->get('telegram_chat_id'));
-		$media = array();
-
-		foreach ($batch['files'] as $file) {
-			$filename = $file['stored_name'];
-			$dest     = $tmpPath . '/' . $filename;
-
-			$query[$filename] = new \CURLFile($dest, $this->getAttachmentMimeType($file), File::makeSafe($file['name']));
-			$media[] = array('type' => $batch['type'], 'media' => 'attach://' . $filename);
-			//@todo: добавить caption для изображений из label полей
-		}
-
-		if (count($media) === 1) {
-			// sendMediaGroup требует не меньше двух элементов, поэтому одиночное вложение уходит своим методом и отдельным полем файла.
-			$filename = $batch['files'][0]['stored_name'];
-			$method = $batch['type'] === 'photo' ? 'sendPhoto' : 'sendDocument';
-			$query[$batch['type']] = $query[$filename];
-			unset($query[$filename]);
-		} else {
-			$method = 'sendMediaGroup';
-			$query['media'] = json_encode($media);
-		}
-
-		return $this->requestTelegram($form, $method, $query, self::TELEGRAM_UPLOAD_TIMEOUT);
-	}
-
-	/** Выполняет запрос к Bot API.
-	 *
-	 * @param   WedalJoomlaCallbackHelper  $form     Форма с параметрами модуля.
-	 * @param   string                     $method   Метод Bot API.
-	 * @param   string|array               $fields   Тело запроса: строка запроса либо массив с CURLFile.
-	 * @param   int                        $timeout  Предел ожидания ответа, секунды.
-	 *
-	 * @return  bool
-	 */
-	private function requestTelegram($form, $method, $fields, $timeout)
-	{
-		$ch = curl_init('https://api.telegram.org/bot' . $form->params->get('telegram_api_key') . '/' . $method);
-
-		if ($ch === false) {
-			return false;
-		}
-
-		curl_setopt($ch, CURLOPT_POST, true);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::TELEGRAM_CONNECT_TIMEOUT);
-		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-
-		$result = curl_exec($ch);
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		unset($ch);
-
-		return $this->isSuccessfulTelegramResponse($result, $httpCode);
-	}
-
-	// Собирает текст уведомления для Telegram. 
-	private function buildTelegramMessage($form, $page_url = null)
-	{
-		$tg_message = '';
-
-		if ($form->params->get('telegram_introtext')) {
-			$tg_message .= $this->escapeTelegramHtml($form->params->get('telegram_introtext')) . "\n\n";
-		}
-
-		foreach ($form->values as $key => $value) {
-			if (is_array($value)) {
-				$value = implode(', ', $value);
-			}
-
-			$tg_message .= $this->escapeTelegramHtml($form->form->getFieldAttribute($key, 'label')) . ': ' . $this->escapeTelegramHtml($value) . "\n";
-		}
-
-		if (!empty($page_url)) {
-			$tg_message .= "\n" . $this->escapeTelegramHtml(Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SEND_FROM_URL')) . "\n" . $this->escapeTelegramHtml($page_url);
-		}
-
-		return $tg_message;
-	}
-
-	// Экранирует значение для сообщения Telegram с parse_mode=html.
-	private function escapeTelegramHtml($value)
-	{
-		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-	}
-
-	// Проверяет транспортный и API-результат Telegram, не раскрывая ответ пользователю.
-	private function isSuccessfulTelegramResponse($response, $httpCode)
-	{
-		if (!is_string($response) || $httpCode < 200 || $httpCode >= 300) {
-			return false;
-		}
-
-		$payload = json_decode($response);
-
-		return is_object($payload) && !empty($payload->ok);
 	}
 
 }
