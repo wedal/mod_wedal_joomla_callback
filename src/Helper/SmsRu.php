@@ -52,6 +52,8 @@ final class SmsRu
 	private $apiKey;
 
 	/**
+	 * Создаёт клиент API sms.ru.
+	 *
 	 * @param   string  $apiKey  Ключ API из личного кабинета sms.ru.
 	 */
 	public function __construct($apiKey)

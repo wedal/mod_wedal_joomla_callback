@@ -26,6 +26,8 @@ final class FormBuilderHelper
 	private $moduleId;
 
 	/**
+	 * Создаёт конструктор формы модуля.
+	 *
 	 * @param   object    $app       Приложение Joomla.
 	 * @param   Registry  $params    Параметры модуля.
 	 * @param   int       $moduleId  Идентификатор модуля.
@@ -57,6 +59,8 @@ final class FormBuilderHelper
 	 * Приписывает полям формы идентификатор с номером модуля. Без этого id поля равен его имени (`name`, `email`, `phone`), и на странице с двумя экземплярами модуля идентификаторы дублируются: `<label for>` ведёт на чужое поле, а скринридер и клик по label попадают не туда.
 	 *
 	 * @param   Form  $form  Собранная форма.
+	 *
+	 * @return  void
 	 */
 	private function prefixFieldIds($form)
 	{
@@ -86,7 +90,15 @@ final class FormBuilderHelper
 		}
 	}
 
-	// Добавляет динамически сформированное поле в форму.
+	/**
+	 * Добавляет динамически сформированное поле в форму.
+	 *
+	 * @param   Form       $form         Собираемая форма.
+	 * @param   \stdClass  $form_params  Атрибуты поля: имя, тип, подпись и остальное.
+	 * @param   string     $fieldset     Набор полей, в который попадает поле.
+	 *
+	 * @return  void
+	 */
 	private function createField($form, $form_params, $fieldset = 'fields')
 	{
 		$note = new \SimpleXMLElement('<field />');
@@ -107,7 +119,11 @@ final class FormBuilderHelper
 		$form->setField($note, null, true, $fieldset);
 	}
 
-	// Возвращает CAPTCHA-плагин модуля, если он выбран и включён.
+	/**
+	 * Возвращает CAPTCHA-плагин модуля, если он выбран и включён.
+	 *
+	 * @return  string  Имя плагина либо пустая строка, если поле CAPTCHA не нужно.
+	 */
 	private function getCaptchaPlugin()
 	{
 		$plugin = trim((string) $this->params->get('captcha', '0'));
@@ -125,7 +141,13 @@ final class FormBuilderHelper
 		return $plugin;
 	}
 
-	//Создает базовые поля модуля согласно настройкам в нем
+	/**
+	 * Создаёт базовые поля модуля согласно настройкам в нём.
+	 *
+	 * @param   Form  $form  Собираемая форма.
+	 *
+	 * @return  void
+	 */
 	private function createFields($form){
 
 		//Имя
@@ -261,7 +283,11 @@ final class FormBuilderHelper
 		}
 	}
 
-	// Подпись согласия со ссылкой на статью с условиями. Если статья недоступна, остаётся текст ссылки без самой ссылки.
+	/**
+	 * Подпись согласия со ссылкой на статью с условиями. Если статья недоступна, остаётся текст ссылки без самой ссылки.
+	 *
+	 * @return  string
+	 */
 	private function getTosLabel()
 	{
 		$tosLinkText = $this->params->get('toslinktext', Text::_('MOD_WEDAL_JOOMLA_CALLBACK_TOSLINKTEXT_TITLE'));
@@ -293,7 +319,13 @@ final class FormBuilderHelper
 		}
 	}
 
-	//Создает дополнительные поля модуля согласно настройкам на вкладке дополнительных полей
+	/**
+	 * Создаёт дополнительные поля модуля согласно настройкам на вкладке дополнительных полей.
+	 *
+	 * @param   Form  $form  Собираемая форма.
+	 *
+	 * @return  bool  Дополнительные поля разобраны и добавлены в набор customfields.
+	 */
 	private function createCustomFields($form){
 		if (!$this->params->get('enable_customfields', '0')) {
 			return false;

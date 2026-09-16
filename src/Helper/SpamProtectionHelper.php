@@ -18,11 +18,13 @@ final class SpamProtectionHelper
 	// Во сколько раз порог общего потолка модуля выше персонального порога по IP/сессии.
 	private const RATE_LIMIT_MODULE_FACTOR = 20;
 
-	/** @var object Приложение Joomla */
+	/** @var object Приложение Joomla. */
 	private $app;
 
 	/**
-	 * @param   object  $app  Приложение Joomla
+	 * Создаёт помощник антиспам-защиты заявок.
+	 *
+	 * @param   object  $app  Приложение Joomla.
 	 */
 	public function __construct($app)
 	{
@@ -70,7 +72,14 @@ final class SpamProtectionHelper
 		return $startedAt;
 	}
 
-	// Проверяет, что пользователь заполнял форму не слишком быстро.
+	/**
+	 * Проверяет, что посетитель заполнял форму не слишком быстро.
+	 *
+	 * @param   int       $moduleId  Идентификатор модуля.
+	 * @param   Registry  $params    Параметры модуля.
+	 *
+	 * @return  bool  Форма заполнялась не быстрее заданного порога.
+	 */
 	private function hasMinimumFillTime($moduleId, Registry $params)
 	{
 		$minimumFillTime = max(0, min(60, (int) $params->get('minimum_fill_time', 3)));
@@ -79,8 +88,17 @@ final class SpamProtectionHelper
 		return $formStartedAt > 0 && time() - $formStartedAt >= $minimumFillTime;
 	}
 
-	// Проверяет и увеличивает счётчики лимита заявок.
-	// Отказ хранилища не должен блокировать заявку: honeypot, минимальное время, заполнения и CAPTCHA продолжают работать, поэтому здесь fail-open.
+	/**
+	 * Проверяет и увеличивает счётчики лимита заявок.
+	 *
+	 * Отказ хранилища не должен блокировать заявку: поле-ловушка, минимальное время
+	 * заполнения и CAPTCHA продолжают работать, поэтому здесь fail-open.
+	 *
+	 * @param   int       $moduleId  Идентификатор модуля.
+	 * @param   Registry  $params    Параметры модуля.
+	 *
+	 * @return  bool  true — лимит заявок исчерпан.
+	 */
 	private function isRateLimited($moduleId, Registry $params)
 	{
 		try {
@@ -92,7 +110,14 @@ final class SpamProtectionHelper
 		}
 	}
 
-	// Считает заявки в скользящем окне по модулю, IP-адресу и сессии.
+	/**
+	 * Считает заявки в скользящем окне по модулю, IP-адресу и сессии.
+	 *
+	 * @param   int       $moduleId  Идентификатор модуля.
+	 * @param   Registry  $params    Параметры модуля.
+	 *
+	 * @return  bool  true — хотя бы один из счётчиков достиг своего предела.
+	 */
 	private function checkRateLimit($moduleId, Registry $params)
 	{
 		$maximumRequests = max(1, min(20, (int) $params->get('rate_limit_requests', 3)));
@@ -132,7 +157,13 @@ final class SpamProtectionHelper
 		return false;
 	}
 
-	// Возвращает хранилище счётчиков лимита заявок.
+	/**
+	 * Возвращает хранилище счётчиков лимита заявок.
+	 *
+	 * @param   int  $window  Размер скользящего окна, секунды.
+	 *
+	 * @return  \Joomla\CMS\Cache\Controller\OutputController
+	 */
 	private function getRateLimitCache($window)
 	{
 		return Factory::getContainer()

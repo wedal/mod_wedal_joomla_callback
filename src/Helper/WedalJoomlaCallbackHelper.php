@@ -28,7 +28,9 @@ use Joomla\Registry\Registry;
 class WedalJoomlaCallbackHelper extends \stdClass
 {
 
-	// Инициализирует приложение и параметры JavaScript.
+	/**
+	 * Инициализирует приложение и передаёт параметры JavaScript в документ.
+	 */
 	public function __construct()
 	{
 		$this->app = Factory::getApplication();
@@ -40,14 +42,20 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		$this->app->getDocument()->addScriptOptions('wedal_joomla_callback', $js_params);
 	}
 
-	// Экранирует значение для вывода в HTML-атрибут шаблона.
+	/**
+	 * Экранирует значение для вывода в HTML-атрибут шаблона.
+	 *
+	 * @param   mixed  $value  Значение из параметров модуля или полей формы.
+	 *
+	 * @return  string
+	 */
 	public static function escapeAttribute($value)
 	{
 		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
 	/**
-	 * Класс обёртки поля для шаблона — имя поля, приведённое к тем же символам, что и идентификатор. Шаблоны брали для этого `$field->id`.После появления префикса id имени больше не равен, а класс обёртки обязан остаться прежним по причинам обратной совместимости
+	 * Класс обёртки поля для шаблона — имя поля, приведённое к тем же символам, что и идентификатор. Шаблоны брали для этого `$field->id`. После появления префикса id имени больше не равен, а класс обёртки обязан остаться прежним по причинам обратной совместимости.
 	 *
 	 * @param   object  $field  Поле формы Joomla.
 	 *
@@ -58,7 +66,14 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return preg_replace('#\W#', '_', (string) $field->getAttribute('name'));
 	}
 
-	// Загружает параметры модуля и формирует поля формы.
+	/**
+	 * Загружает параметры модуля и формирует поля формы.
+	 *
+	 * @param   object|int|array  $moduleid        Модуль, его идентификатор либо массив: тогда идентификатор берётся из запроса.
+	 * @param   bool              $startFormTimer  Отметить в сессии момент показа формы.
+	 *
+	 * @return  bool  false — модуль недоступен, форма не собрана.
+	 */
 	public function getForm($moduleid, $startFormTimer = true)
 	{
 		if ($moduleid instanceof \stdClass) {
@@ -105,7 +120,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return true;
 	}
 
-	// Возвращает модуль, доступный текущему посетителю и назначенный на текущую страницу.
+	/**
+	 * Возвращает модуль, доступный текущему посетителю и назначенный на текущую страницу.
+	 *
+	 * @param   int  $moduleId  Идентификатор модуля.
+	 *
+	 * @return  object|null  Модуль либо null, если он недоступен или это модуль другого типа.
+	 */
 	private function getAccessibleModule($moduleId)
 	{
 		if ($moduleId <= 0) {
@@ -125,8 +146,13 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return $module;
 	}
 
-	// Возвращает разметку всплывающей формы для AJAX-запроса.
-	// Вызывается с format=raw, поэтому ответ должен быть обычным текстом/HTML, а не JsonResponse.
+	/**
+	 * Возвращает разметку всплывающей формы для AJAX-запроса.
+	 *
+	 * Вызывается с format=raw, поэтому ответ должен быть обычным текстом или HTML, а не JsonResponse.
+	 *
+	 * @return  bool  Всегда false: разметка уже напечатана.
+	 */
 	public function getFormAjax()
 	{
 		$moduleId = Factory::getApplication()->getInput()->get('modid', null, 'int');
@@ -141,7 +167,10 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return false;
 	}
 
-	/** Отдаёт живое состояние формы: токен сессии и метку начала заполнения. Встроенная форма попадает в кэш страниц Joomla вместе с разметкой: токен там принадлежит чужой сессии, а метка в сессии не создаётся вовсе, потому что модуль не рендерится. Поэтому и то и другое выдаётся отдельным запросом, минующим кэш, так же, как их получает всплывающая форма в getFormAjax().
+	/**
+	 * Отдаёт живое состояние формы: токен сессии и метку начала заполнения. Встроенная форма попадает в кэш страниц Joomla вместе с разметкой: токен там принадлежит чужой сессии, а метка в сессии не создаётся вовсе, потому что модуль не рендерится. Поэтому и то и другое выдаётся отдельным запросом, минующим кэш, так же, как их получает всплывающая форма в getFormAjax().
+	 *
+	 * @return  array  Ответ com_ajax: токен формы и признак ошибки.
 	 */
 	public function getFormStateAjax()
 	{
@@ -158,7 +187,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return array('token' => Session::getFormToken(), 'error' => 0);
 	}
 
-	// Проверяет и отправляет заявку, полученную через AJAX.
+	/**
+	 * Проверяет и отправляет заявку, полученную через AJAX.
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	public function sendFormAjax()
 	{
 		//Check token
@@ -239,7 +272,11 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return array('message' => $thankyoutext, 'error' => 0);
 	}
 
-	// Адрес страницы, с которой отправлена заявка. Приходит от посетителя, поэтому принимается только http(s) разумной длины.
+	/**
+	 * Адрес страницы, с которой отправлена заявка. Приходит от посетителя, поэтому принимается только http(s) разумной длины.
+	 *
+	 * @return  string|null  Проверенный адрес либо null, если он не прошёл проверку.
+	 */
 	private function getPageUrl()
 	{
 		$pageUrl = rawurldecode((string) $this->app->getInput()->get('page', '', 'RAW'));
@@ -253,9 +290,14 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return in_array(strtolower((string) $pageScheme), array('http', 'https'), true) ? $pageUrl : null;
 	}
 
-	// Повторяет проверку Session::checkToken(), но без редиректа.
-	// При новой сессии checkToken() уводит запрос на index.php: fetch идёт по редиректу
-	// и получает HTML главной страницы вместо JSON, после чего разбор ответа на клиенте падает.
+	/**
+	 * Повторяет проверку Session::checkToken(), но без редиректа.
+	 *
+	 * При новой сессии checkToken() уводит запрос на index.php: fetch идёт по редиректу
+	 * и получает HTML главной страницы вместо JSON, после чего разбор ответа на клиенте падает.
+	 *
+	 * @return  bool  Запрос принёс действующий токен формы.
+	 */
 	private function hasValidToken()
 	{
 		$token = Session::getFormToken();
@@ -268,20 +310,35 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return $input->server->get('HTTP_X_CSRF_TOKEN', '', 'alnum') === $token;
 	}
 
-	// Возвращает ответ об истёкшем токене в том же виде, что и остальные ветки sendFormAjax().
-	// Собственный echo склеивался с ответом com_ajax в два JSON-документа подряд, и клиент не мог их разобрать.
+	/**
+	 * Возвращает ответ об истёкшем токене в том же виде, что и остальные ветки sendFormAjax().
+	 *
+	 * Собственный echo склеивался с ответом com_ajax в два JSON-документа подряд, и клиент не мог их разобрать.
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	private function getInvalidTokenResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_INVALID_TOKEN'), 'error' => 1);
 	}
 
-	// Возвращает нейтральный ответ, не раскрывая конфигурацию недоступного модуля.
+	/**
+	 * Возвращает нейтральный ответ, не раскрывая конфигурацию недоступного модуля.
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	private function getInvalidModuleResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'), 'error' => 1);
 	}
 
-	// Возвращает ответ о непройденной проверке формы.
+	/**
+	 * Возвращает ответ о непройденной проверке формы.
+	 *
+	 * @param   array  $errors  Ошибки, накопленные Form::validate().
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	private function getValidationErrorResponse(array $errors)
 	{
 		$messages = array(Text::_('MOD_WEDAL_JOOMLA_CALLBACK_VALIDATION_ERROR'));
@@ -305,13 +362,21 @@ class WedalJoomlaCallbackHelper extends \stdClass
 		return array('message' => implode("\n", $messages), 'error' => 1);
 	}
 
-	// Формирует единый ответ при срабатывании антиспам-защиты.
+	/**
+	 * Формирует единый ответ при срабатывании антиспам-защиты.
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	private function getSpamProtectionResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION_ERROR'), 'error' => 1);
 	}
 
-	// Возвращает нейтральный ответ, не раскрывая детали сбоя доставки.
+	/**
+	 * Возвращает нейтральный ответ, не раскрывая детали сбоя доставки.
+	 *
+	 * @return  array  Ответ com_ajax: текст для посетителя и признак ошибки.
+	 */
 	private function getDeliveryErrorResponse()
 	{
 		return array('message' => Text::_('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR'), 'error' => 1);

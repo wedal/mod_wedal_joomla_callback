@@ -17,6 +17,8 @@ final class SmsHelper
 	private $form;
 
 	/**
+	 * Создаёт помощник отправки SMS-уведомления.
+	 *
 	 * @param   WedalJoomlaCallbackHelper  $form  Форма с параметрами модуля и значениями полей.
 	 */
 	public function __construct($form)
@@ -68,7 +70,11 @@ final class SmsHelper
 		);
 	}
 
-	// Собирает текст сообщения: вступление и значения выбранных полей в пределах заданной длины.
+	/**
+	 * Собирает текст сообщения: вступление и значения выбранных полей в пределах заданной длины.
+	 *
+	 * @return  string
+	 */
 	private function buildMessage()
 	{
 		$params = $this->form->params;

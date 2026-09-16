@@ -25,6 +25,8 @@ final class TelegramHelper
 	private $form;
 
 	/**
+	 * Создаёт помощник уведомлений в Telegram.
+	 *
 	 * @param   WedalJoomlaCallbackHelper  $form  Форма с параметрами модуля, полями и значениями.
 	 */
 	public function __construct($form)
@@ -75,7 +77,9 @@ final class TelegramHelper
 		return $delivered;
 	}
 
-	/** Раскладывает вложения по запросам Telegram.
+	/**
+	 * Раскладывает вложения по запросам Telegram.
+	 *
 	 * @param   array  $attached_files  Принятые вложения из AttachmentHelper.
 	 *
 	 * @return  array[]  Пачки вида ['type' => 'photo'|'document', 'files' => [...]].
@@ -99,7 +103,13 @@ final class TelegramHelper
 		return $batches;
 	}
 
-	// Тип содержимого определяет finfo при приёме файла.
+	/**
+	 * Тип содержимого определяет finfo при приёме файла.
+	 *
+	 * @param   array  $file  Принятое вложение из AttachmentHelper.
+	 *
+	 * @return  string  Тип содержимого либо application/octet-stream, если он неизвестен.
+	 */
 	private function getAttachmentMimeType($file)
 	{
 		return isset($file['mime_type']) && is_string($file['mime_type']) && $file['mime_type'] !== ''
@@ -107,16 +117,24 @@ final class TelegramHelper
 			: 'application/octet-stream';
 	}
 
-	// Фотографией уходит только то, что Telegram точно принимает как изображение. Остальное — документом: так владелец сайта получает файл в исходном виде, а не ошибку доставки.
+	/**
+	 * Фотографией уходит только то, что Telegram точно принимает как изображение. Остальное — документом: так владелец сайта получает файл в исходном виде, а не ошибку доставки.
+	 *
+	 * @param   string  $mimeType  Тип содержимого вложения.
+	 *
+	 * @return  string  photo или document.
+	 */
 	private function getMediaType($mimeType)
 	{
 		return in_array(strtolower((string) $mimeType), self::PHOTO_TYPES, true) ? 'photo' : 'document';
 	}
 
-	/** Отправляет одну пачку вложений.
+	/**
+	 * Отправляет одну пачку вложений.
+	 *
 	 * @param   array  $batch  Пачка из buildMediaBatches().
 	 *
-	 * @return  bool
+	 * @return  bool  Пачка принята Bot API.
 	 */
 	private function sendMediaBatch($batch)
 	{
@@ -145,13 +163,14 @@ final class TelegramHelper
 		return $this->request($method, $query, self::UPLOAD_TIMEOUT);
 	}
 
-	/** Выполняет запрос к Bot API.
+	/**
+	 * Выполняет запрос к Bot API.
 	 *
 	 * @param   string        $method   Метод Bot API.
 	 * @param   string|array  $fields   Тело запроса: строка запроса либо массив с CURLFile.
 	 * @param   int           $timeout  Предел ожидания ответа, секунды.
 	 *
-	 * @return  bool
+	 * @return  bool  Ответ получен, и Bot API сообщил об успехе.
 	 */
 	private function request($method, $fields, $timeout)
 	{
@@ -177,7 +196,13 @@ final class TelegramHelper
 		return $this->isSuccessfulResponse($result, $httpCode);
 	}
 
-	// Собирает текст уведомления для Telegram.
+	/**
+	 * Собирает текст уведомления для Telegram.
+	 *
+	 * @param   string|null  $page_url  Проверенный адрес страницы отправки.
+	 *
+	 * @return  string
+	 */
 	private function buildMessage($page_url = null)
 	{
 		$tg_message = '';
@@ -201,13 +226,26 @@ final class TelegramHelper
 		return $tg_message;
 	}
 
-	// Экранирует значение для сообщения Telegram с parse_mode=html.
+	/**
+	 * Экранирует значение для сообщения Telegram с parse_mode=html.
+	 *
+	 * @param   mixed  $value  Значение из параметров модуля или полей заявки.
+	 *
+	 * @return  string
+	 */
 	private function escapeHtml($value)
 	{
 		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
-	// Проверяет транспортный и API-результат Telegram, не раскрывая ответ пользователю.
+	/**
+	 * Проверяет транспортный и API-результат Telegram, не раскрывая ответ пользователю.
+	 *
+	 * @param   mixed  $response  Тело ответа, как его вернул cURL.
+	 * @param   int    $httpCode  Код ответа HTTP.
+	 *
+	 * @return  bool  Запрос доставлен, и Bot API вернул ok.
+	 */
 	private function isSuccessfulResponse($response, $httpCode)
 	{
 		if (!is_string($response) || $httpCode < 200 || $httpCode >= 300) {

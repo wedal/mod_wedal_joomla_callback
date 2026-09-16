@@ -30,6 +30,8 @@ final class EmailHelper
 	private $mailer;
 
 	/**
+	 * Создаёт помощник отправки письма с заявкой.
+	 *
 	 * @param   object                     $app   Приложение Joomla.
 	 * @param   WedalJoomlaCallbackHelper  $form  Форма с параметрами модуля, полями и значениями.
 	 */
@@ -117,7 +119,8 @@ final class EmailHelper
 		return $this->mailer->send() === true;
 	}
 
-	/** Собирает тело письма по макету *_message.
+	/**
+	 * Собирает тело письма по макету *_message.
 	 *
 	 * Макет получает переменные $form, $page_url и $sms_status: на эти имена опираются
 	 * и его переопределения в шаблонах сайта.

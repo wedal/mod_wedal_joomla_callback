@@ -90,6 +90,10 @@ final class SmsRuResult
 	 * сообщение до него не дошло. Такой ответ успехом не считается, а код и
 	 * текст первого отказавшего получателя занимают место кода конверта:
 	 * иначе в журнал попало бы «всё хорошо» на неотправленное сообщение.
+	 *
+	 * @param   \stdClass  $payload  Разобранное тело ответа sms.ru.
+	 *
+	 * @return  void
 	 */
 	private function readRecipients(\stdClass $payload)
 	{
@@ -138,6 +142,8 @@ final class SmsRuResult
 	}
 
 	/**
+	 * Принято ли сообщение: и конвертом запроса, и каждым получателем.
+	 *
 	 * @return  bool
 	 */
 	public function isSuccessful()
@@ -146,6 +152,8 @@ final class SmsRuResult
 	}
 
 	/**
+	 * Код ответа: status_code sms.ru либо LOCAL_ERROR_CODE.
+	 *
 	 * @return  int
 	 */
 	public function getStatusCode()
@@ -154,6 +162,8 @@ final class SmsRuResult
 	}
 
 	/**
+	 * Описание отказа. У успешного ответа пустое.
+	 *
 	 * @return  string
 	 */
 	public function getStatusText()
@@ -162,6 +172,8 @@ final class SmsRuResult
 	}
 
 	/**
+	 * Идентификаторы принятых sms.ru сообщений.
+	 *
 	 * @return  array<string, string>  Номер получателя => идентификатор сообщения.
 	 */
 	public function getSmsIds()
@@ -170,7 +182,9 @@ final class SmsRuResult
 	}
 
 	/**
-	 * @return  float|null
+	 * Остаток на счёте, пришедший вместе с ответом на отправку.
+	 *
+	 * @return  float|null  Остаток либо null, если ответ его не содержал.
 	 */
 	public function getBalance()
 	{

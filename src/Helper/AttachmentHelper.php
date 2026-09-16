@@ -30,13 +30,15 @@ final class AttachmentHelper
 	// Правило accept по умолчанию: совпадает со значением настройки attachmentformat в манифесте и покрывает белый список SAFE_ATTACHMENT_TYPES целиком. Пустое правило означает именно его, а не отказ во вложении.
 	private const DEFAULT_ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx';
 
-	/** @var object Приложение Joomla */
+	/** @var object Приложение Joomla. */
 	private $app;
 
 	/** @var string[] Пути файлов, записанных в tmp_path за время запроса. */
 	private $storedPaths = array();
 
 	/**
+	 * Создаёт помощник вложений заявки.
+	 *
 	 * @param   object  $app  Приложение Joomla.
 	 */
 	public function __construct($app)
@@ -145,7 +147,9 @@ final class AttachmentHelper
 		$this->storedPaths = array();
 	}
 
-	/** Приводит вложения поля к списку файлов.
+	/**
+	 * Приводит вложения поля к списку файлов.
+	 *
 	 * @param   mixed  $files  Значение поля из Files::get().
 	 *
 	 * @return  array  Список файлов, у каждого непустое имя.
@@ -171,12 +175,13 @@ final class AttachmentHelper
 		return $normalized;
 	}
 
-	/** Возвращает правило accept для поля вложения.
+	/**
+	 * Возвращает правило accept для поля вложения.
 	 *
-	 * @param   string  $file_field_name  Имя поля вложения.
-	 * @param   mixed   $form             Объект формы.
+	 * @param   string                     $file_field_name  Имя поля вложения.
+	 * @param   WedalJoomlaCallbackHelper  $form             Форма с параметрами модуля.
 	 *
-	 * @return  string
+	 * @return  string  Правило accept поля либо правило по умолчанию.
 	 */
 	private function getAcceptRule($file_field_name, $form)
 	{
@@ -190,7 +195,16 @@ final class AttachmentHelper
 		return $accept === '' ? self::DEFAULT_ATTACHMENT_ACCEPT : $accept;
 	}
 
-	// Записывает причину, по которой вложение не ушло.
+	/**
+	 * Записывает причину, по которой вложение не ушло.
+	 *
+	 * @param   string       $file_field_name  Имя поля вложения.
+	 * @param   string       $fileExt          Расширение из имени файла.
+	 * @param   string|bool  $mimeType         Тип содержимого, определённый finfo.
+	 * @param   string       $reason           Причина отказа.
+	 *
+	 * @return  void
+	 */
 	private function logDroppedAttachment($file_field_name, $fileExt, $mimeType, $reason)
 	{
 		LogHelper::add(sprintf(
@@ -202,13 +216,28 @@ final class AttachmentHelper
 		));
 	}
 
-	// Расширение файла приходит из его имени, то есть от посетителя. В журнал попадает только значение подходящей формы: остальное — 'unknown', иначе строку журнала можно было бы разорвать переводом строки и подделать в ней запись любого уровня.
+	/**
+	 * Расширение файла приходит из его имени, то есть от посетителя. В журнал попадает только значение подходящей формы: остальное — 'unknown', иначе строку журнала можно было бы разорвать переводом строки и подделать в ней запись любого уровня.
+	 *
+	 * @param   mixed   $value    Значение, предназначенное для журнала.
+	 * @param   string  $pattern  Образец допустимой формы значения.
+	 *
+	 * @return  string
+	 */
 	private function forLog($value, $pattern)
 	{
 		return is_string($value) && preg_match($pattern, $value) ? strtolower($value) : 'unknown';
 	}
 
-	// Сверяет расширение и MIME-тип файла с разрешёнными форматами.
+	/**
+	 * Сверяет расширение и MIME-тип файла с разрешёнными форматами.
+	 *
+	 * @param   string  $file_ext  Расширение из имени файла.
+	 * @param   string  $filetype  Тип содержимого, определённый finfo.
+	 * @param   string  $accept    Правило accept поля вложения.
+	 *
+	 * @return  bool  Файл разрешён и белым списком, и правилом accept.
+	 */
 	public function isValidFileType($file_ext, $filetype, $accept) {
 
 		if (!$accept || !is_string($filetype) || !is_string($file_ext)) {
