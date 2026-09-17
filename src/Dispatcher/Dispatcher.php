@@ -1,12 +1,12 @@
 <?php
 namespace Joomla\Module\WedalJoomlaCallback\Site\Dispatcher;
 
-\defined('JPATH_PLATFORM') or die;
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
 use Joomla\CMS\Extension\ModuleInterface;
-use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\Input\Input;
 
 /**
@@ -36,7 +36,7 @@ class Dispatcher extends AbstractModuleDispatcher
 	/**
 	 * Returns the layout data.
 	 *
-	 * @return  array
+	 * @return  array|false  
 	 *
 	 * @since   4.0.0
 	 */
@@ -45,14 +45,24 @@ class Dispatcher extends AbstractModuleDispatcher
 		$data = parent::getLayoutData();
 
 		$data['form'] = $this->moduleExtension->getHelper('WedalJoomlaCallbackHelper');
-		$data['form']->getForm($data['module']->id);
+		if (!$data['form']->getForm($data['module'])) {
+			return false;
+		}
 
-		$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
-		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer ' => true]);
+		$wa = $this->app->getDocument()->getWebAssetManager();
+		$wa->registerAndUseScript('wjcallback', 'mod_wedal_joomla_callback/wjcallback.js', [] ,['defer' => true]);
 		$wa->registerAndUseStyle('wjcallback', 'mod_wedal_joomla_callback/wjcallback.css');
 
+		Text::script('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
+
 		if ($data['params']->get('showphonemask')) {
-			$wa->registerAndUseScript('maska', 'mod_wedal_joomla_callback/maska.js', [] ,['defer ' => true]);
+			$wa->registerAndUseScript('wjphonemask', 'mod_wedal_joomla_callback/wjphonemask.js', [] ,['defer' => true]);
+		}
+
+		// Всплывающая форма грузится по нажатию отдельным запросом, и ресурсы CAPTCHA
+		// в его ответ не попадают. Подключаем их к странице заранее.
+		if (!$data['params']->get('moduletype')) {
+			$data['form']->warmUpCaptchaAssets();
 		}
 
 		$data['params']->set('layout', $data['params']->get('layout', 'default') . ($data['params']->get('moduletype') ? '_embeddedform' : ''));

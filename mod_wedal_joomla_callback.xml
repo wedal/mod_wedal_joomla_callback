@@ -7,12 +7,11 @@
 	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
 	<authorEmail>wedal@wedal.ru</authorEmail>
 	<authorUrl>wedal.ru</authorUrl>
-	<version>2.1.1</version>
+	<version>2.2.0</version>
 	<description>MOD_WEDAL_JOOMLA_CALLBACK_DESCRIPTION</description>
     <namespace path="src">Joomla\Module\WedalJoomlaCallback</namespace>
 	<files>
-		<folder module="mod_wedal_joomla_callback">src</folder>
-		<folder>services</folder>
+		<folder module="mod_wedal_joomla_callback">services</folder>
 		<folder>tmpl</folder>
 		<folder>src</folder>
 	</files>
@@ -58,6 +57,7 @@
 
 				<field
 					name="buttontext"
+					filter="safehtml"
 					showon="moduletype:0[AND]hideformbutton:0"
 					type="text"
 					default=""
@@ -68,6 +68,7 @@
 
 				<field
 						name="send_buttontext"
+						filter="safehtml"
 						type="text"
 						default=""
 						hint="MOD_WEDAL_JOOMLA_CALLBACK_SEND"
@@ -117,6 +118,7 @@
 
 				<field
 					name="formtitle"
+					filter="safehtml"
 					type="text" default=""
 					showon="showformtitle:1"
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_TITLE"
@@ -191,6 +193,19 @@
 					showon="showemail:1"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ_DESC"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_SHOWMAILREQ"
+					default="0"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+					type="radio"
+					name="prefilluser"
+					showon="showname:1[OR]showemail:1"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_PREFILLUSER_DESC"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_PREFILLUSER"
 					default="0"
 					class="btn-group btn-group-yesno"
 					>
@@ -367,7 +382,7 @@
 				<field
 					name="attachmentformat"
 					type="text"
-					default=""
+					default="image/*,.pdf,.doc,.docx,.xls,.xlsx"
 					showon="showattachment:1"
 					hint="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT_TITLE"
 					label="MOD_WEDAL_JOOMLA_CALLBACK_ATTACHMENT_FORMAT"
@@ -404,6 +419,62 @@
 
 			</fieldset>
 
+			<fieldset name="antispam" label="MOD_WEDAL_JOOMLA_CALLBACK_SPAM_PROTECTION">
+				<field
+					type="radio"
+					name="enable_antispam"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_ENABLE_ANTISPAM"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_ENABLE_ANTISPAM_DESC"
+					default="1"
+					class="btn-group btn-group-yesno"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
+					name="rate_limit_requests"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_REQUESTS"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_REQUESTS_DESC"
+					default="3"
+					min="1"
+					max="20"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="rate_limit_window"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_WINDOW"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_RATE_LIMIT_WINDOW_DESC"
+					default="3600"
+					min="60"
+					max="86400"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="minimum_fill_time"
+					type="number"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_MINIMUM_FILL_TIME"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_MINIMUM_FILL_TIME_DESC"
+					default="3"
+					min="0"
+					max="60"
+					showon="enable_antispam:1"
+				/>
+
+				<field
+					name="captcha"
+					type="plugins"
+					folder="captcha"
+					label="MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA"
+					description="MOD_WEDAL_JOOMLA_CALLBACK_CAPTCHA_DESC"
+					default="0"
+				/>
+			</fieldset>
+
 			<fieldset name="customfields">
 				<field
 					name="customfields_note"
@@ -438,7 +509,7 @@
 
 			<fieldset name="decor">
 				<field
-					name="customfields_note"
+					name="customfields_decor_note"
 					type="note"
 					class="alert alert-info"
 					description="MOD_WEDAL_JOOMLA_CALLBACK_DECOR_NOTE"
@@ -526,6 +597,25 @@
 							type="note"
 							class="alert alert-info"
 							description="MOD_WEDAL_JOOMLA_CALLBACK_GACOUNTER_NOTE"
+					/>
+
+					<field
+							name="ga_popup"
+							type="text"
+							showon="moduletype:0"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_GAPOPUP"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_GAPOPUP_DESC"
+					/>
+
+					<field
+							name="ga_submit"
+							type="text"
+							default=""
+							hint=""
+							label="MOD_WEDAL_JOOMLA_CALLBACK_GASUBMIT"
+							description="MOD_WEDAL_JOOMLA_CALLBACK_GASUBMIT_DESC"
 					/>
 				</fieldset>
 			</fieldset>

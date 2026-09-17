@@ -1,10 +1,14 @@
+let wjcallback_ya_counter = null;
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    let module_options = Joomla.getOptions('wedal_joomla_callback');
-    let ya_counter = null;
-    if (typeof ym !== 'undefined') {
-        ya_counter = ym['a'][0][0];
+    if (typeof ym !== 'undefined' && Array.isArray(ym.a) && Array.isArray(ym.a[0])) {
+        wjcallback_ya_counter = ym.a[0][0];
     }
+
+    document.querySelectorAll('.wjcallbackform.embeddedform').forEach((container) => {
+        wjcallback_request_form_state(container);
+    });
 
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.wjcallback-link')) {
@@ -12,9 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         event.preventDefault();
 
-        if (ya_counter && event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid')) {
-            ym(ya_counter, 'reachGoal', event.target.closest('.wjcallback-link').getAttribute('data-ym-aimid'));
-        }
+        wjcallback_reach_goals(event.target.closest('.wjcallback-link'));
 
         let modal_div = document.createElement('div');
         modal_div.id = "wjcallback-modal";
@@ -27,13 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let loader = document.getElementById('wjcallback-loader');
         let wjcmodal = document.getElementById('wjcallback-modal');
         let module_id = event.target.closest('.wjcallback-link').getAttribute('data-id');
-        let itemid = '';
 
-        if (module_options['itemid']) {
-            itemid = '&Itemid=' + module_options['itemid'];
-        }
-
-        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=raw&method=getForm&modid=' + module_id + itemid;
+        let url = wjcallback_ajax_url('getForm', 'raw', module_id);
 
         fetch(url)
             .then(response => response.text())
@@ -46,6 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 wjcmodal.classList.add('show');
 
                 executeScriptElements(wjcmodal);
+
+                if (typeof WJPhoneMask !== 'undefined') {
+                    WJPhoneMask.apply(wjcmodal);
+                }
 
                 wjcmodal.querySelector('.modal-header .close').addEventListener('click', (event) => {
                    wjcmodal_remove(wjcmodal);
@@ -61,14 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         event.preventDefault();
 
-        let module_id = event.target.closest(".wjcallbackform").getAttribute('data-id');
-        let itemid = '';
-        if (module_options['itemid']) {
-            itemid = '&Itemid=' + module_options['itemid'];
-        }
-
-        let url = '/index.php?option=com_ajax&module=wedal_joomla_callback&format=json&method=sendForm&modid=' + module_id + itemid + '&page=' + encodeURIComponent(window.location.href);
-        let formdata = new FormData(event.target.closest('form'));
+        let container = event.target.closest('.wjcallbackform');
+        let module_id = container.getAttribute('data-id');
+        let url = wjcallback_ajax_url('sendForm', 'json', module_id) + '&page=' + encodeURIComponent(window.location.href);
 
         if(!document.dispatchEvent(new CustomEvent('wjcOnFormBeforeSubmit', {detail: event.target, cancelable: true}))) {
             return;
@@ -80,27 +76,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let loader = document.getElementById('wjcallback-loader');
 
-        fetch(url, {
+        Promise.resolve(container.wjcallback_state)
+        .then(() => fetch(url, {
             method: 'POST',
-            body: formdata
-        })
+            body: new FormData(event.target.closest('form'))
+        }))
         .then(response => response.text())
         .then((response) => {
             loader.remove();
-            let responce_obj = JSON.parse(response);
 
-            if (!responce_obj.data.data.error) {
+            let result = wjcallback_parse_response(response);
+
+            if (!result) {
+                alert(wjcallback_delivery_error());
+                return;
+            }
+
+            if (!result.error) {
                 document.dispatchEvent(new CustomEvent('wjcOnFormAfterSubmit', {detail: event.target}));
 
                 event.target.closest('form').querySelector('.modal-footer').style.display = 'none';
-                event.target.closest('form').querySelector('.modal-body').innerHTML = responce_obj.data.data.message;
+                event.target.closest('form').querySelector('.modal-body').innerHTML = result.message;
 
-                if (ya_counter && event.target.closest('form').getAttribute('data-ym-aimid')) {
-                    ym(ya_counter, 'reachGoal', event.target.closest('form').getAttribute('data-ym-aimid'));
-                }
+                wjcallback_reach_goals(event.target.closest('form'));
             } else {
-                alert(responce_obj.data.data.message);
+                alert(result.message || wjcallback_delivery_error());
             }
+         })
+        .catch(() => {
+            let leftover_loader = document.getElementById('wjcallback-loader');
+
+            if (leftover_loader) {
+                leftover_loader.remove();
+            }
+
+            alert(wjcallback_delivery_error());
          });
     });
 
@@ -116,6 +126,144 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function wjcallback_reach_goals(element) {
+    if (!element) {
+        return;
+    }
+
+    let ym_aimid = element.getAttribute('data-ym-aimid');
+    let ga_event = element.getAttribute('data-ga-event');
+
+    if (ym_aimid && wjcallback_ya_counter) {
+        ym(wjcallback_ya_counter, 'reachGoal', ym_aimid);
+    }
+
+    if (ga_event) {
+        wjcallback_send_ga_event(ga_event);
+    }
+}
+
+function wjcallback_send_ga_event(ga_event) {
+    if (typeof gtag === 'function') {
+        gtag('event', ga_event);
+
+        return true;
+    }
+
+    if (Array.isArray(window.dataLayer)) {
+        window.dataLayer.push({'event': ga_event});
+
+        return true;
+    }
+
+    return false;
+}
+
+function wjcallback_ajax_url(method, format, module_id) {
+    let options = Joomla.getOptions('wedal_joomla_callback');
+    let itemid = options && options['itemid'] ? '&Itemid=' + options['itemid'] : '';
+    let base = wjcallback_base_url();
+
+    return base + '/index.php?option=com_ajax&module=wedal_joomla_callback&format=' + format + '&method=' + method + '&modid=' + module_id + itemid;
+}
+
+function wjcallback_base_url() {
+    let options = Joomla.getOptions('wedal_joomla_callback');
+
+    if (options && typeof options['baseurl'] === 'string') {
+        return options['baseurl'].replace(/\/+$/, '');
+    }
+
+    let paths = Joomla.getOptions('system.paths');
+
+    return paths && typeof paths['root'] === 'string' ? paths['root'].replace(/\/+$/, '') : '';
+}
+
+function wjcallback_request_form_state(container) {
+    container.wjcallback_state = fetch(wjcallback_ajax_url('getFormState', 'json', container.getAttribute('data-id')))
+        .then(response => response.text())
+        .then((response) => {
+            let state = wjcallback_parse_response(response);
+
+            if (!state) {
+                return false;
+            }
+
+            wjcallback_set_prefill(container, state.prefill);
+
+            return state.token ? wjcallback_set_token(container, state.token) : false;
+        })
+        .catch(() => false);
+
+    return container.wjcallback_state;
+}
+
+const WJCALLBACK_PREFILL_FIELDS = ['name', 'email'];
+
+function wjcallback_set_prefill(container, prefill) {
+    let form = container.querySelector('form');
+
+    if (!form || !prefill || typeof prefill !== 'object') {
+        return false;
+    }
+
+    WJCALLBACK_PREFILL_FIELDS.forEach((name) => {
+        let value = prefill[name];
+
+        if (typeof value !== 'string' || value === '') {
+            return;
+        }
+
+        let field = form.querySelector('[name="' + name + '"]');
+
+        if (field && field.value === '') {
+            field.value = value;
+        }
+    });
+
+    return true;
+}
+
+function wjcallback_set_token(container, name) {
+    let form = container.querySelector('form');
+
+    if (!form) {
+        return false;
+    }
+
+    let field = form.querySelector('input.wjcallback-token');
+
+    if (!field) {
+        field = document.createElement('input');
+        field.type = 'hidden';
+        field.className = 'wjcallback-token';
+        form.append(field);
+    }
+
+    field.name = name;
+    field.value = '1';
+
+    return true;
+}
+
+function wjcallback_parse_response(response) {
+    let parsed;
+
+    try {
+        parsed = JSON.parse(response);
+    } catch (e) {
+        return null;
+    }
+
+    let payload = parsed && typeof parsed === 'object' ? parsed.data : null;
+
+    return payload && typeof payload === 'object' ? payload : null;
+}
+
+function wjcallback_delivery_error() {
+    return Joomla.Text._('MOD_WEDAL_JOOMLA_CALLBACK_DELIVERY_ERROR');
+}
 
 function wjcmodal_remove(wjcmodal) {
 
