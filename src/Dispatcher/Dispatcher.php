@@ -59,6 +59,12 @@ class Dispatcher extends AbstractModuleDispatcher
 			$wa->registerAndUseScript('wjphonemask', 'mod_wedal_joomla_callback/wjphonemask.js', [] ,['defer' => true]);
 		}
 
+		// Всплывающая форма грузится по нажатию отдельным запросом, и ресурсы CAPTCHA
+		// в его ответ не попадают. Подключаем их к странице заранее.
+		if (!$data['params']->get('moduletype')) {
+			$data['form']->warmUpCaptchaAssets();
+		}
+
 		$data['params']->set('layout', $data['params']->get('layout', 'default') . ($data['params']->get('moduletype') ? '_embeddedform' : ''));
 
 		return $data;

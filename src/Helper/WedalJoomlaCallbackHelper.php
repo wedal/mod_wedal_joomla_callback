@@ -4,6 +4,7 @@ namespace Joomla\Module\WedalJoomlaCallback\Site\Helper;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
@@ -116,6 +117,35 @@ class WedalJoomlaCallbackHelper extends \stdClass
 
 		$this->form = (new FormBuilderHelper($this->app, $this->params, $this->moduleid))->build();
 		$this->fields = $this->form->getXml();
+
+		return true;
+	}
+
+	/**
+	 * Подключает к документу страницы скрипты и стили CAPTCHA-плагина.
+	 *
+	 * @return  bool  Ресурсы CAPTCHA подключены к документу.
+	 */
+	public function warmUpCaptchaAssets()
+	{
+		if (!isset($this->form) || !($this->form instanceof Form)) {
+			return false;
+		}
+
+		$field = $this->form->getField('captcha');
+
+		if (!$field) {
+			return false;
+		}
+
+		try {
+			// Нужен побочный эффект отрисовки — регистрация ресурсов плагина в документе.
+			$field->renderField();
+		} catch (\Throwable $exception) {
+			LogHelper::add('The CAPTCHA assets could not be registered on the page.');
+
+			return false;
+		}
 
 		return true;
 	}
